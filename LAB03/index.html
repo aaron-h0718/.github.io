@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Lab3</title>
+
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css"/>
+
+        <script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js"></script>
+        
+        <script src="https://electionmaps.github.io/provinces.js"></script>
+        <script src="https://electionmaps.github.io/coviddata.js"></script>
+
+        <style type="text/css">
+            html, body {margin: 0; padding: 0; height: 100%;}
+            #map {min-height: 100%;}
+
+            .legend{
+                padding:6px 8px;
+                background:rgba(255,255,255,0.9);
+                box-shadow:0 0 15px rgba(0,0,0,0.2);
+                border-radius:5px;
+            }
+
+            .legend i{
+                width:18px;
+                height:18px;
+                float:left;
+                margin-right:8px;
+                opacity:0.7;
+            }
+        </style>
+
+    </head>
+  
+    <body>
+        <div id="map"></div>
+        <script type="text/javascript">
+
+// 
+// Creates the map.
+// Builds the Leaflet and tells the map where to start.
+//
+
+            var map = L.map('map',{
+                center:[34.666, 104.9569],
+                zoom: 5
+            });
+
+// 
+// Basemap Layers
+// Background maps. Only one should be added by default.
+//
+
+            var canvas=L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+	            attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
+                minZoom: 0,
+                maxZoom: 17,
+                ext: 'png'
+}).addTo(map);  //<-- default basemap
+
+            var imagery=L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+	            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://www.hotosm.org/" target="_blank">Humanitarian OpenStreetMap Team</a> hosted by <a href="https://openstreetmap.fr/" target="_blank">OpenStreetMap France</a>',
+                minZoom: 0,
+                maxZoom: 19,
+                ext: 'png'
+});      
+
+//
+// Choropleth color function.
+// This decides what color each province should be. 
+// Is based on population value (POP10).
+//
+            function getColor(value){
+                return value>50000000?'#54278f':
+                    value>25000000?'#756bb1':
+                    value>10000000?'#9e9ac8':
+                    value>5000000?'#cbc9e2':
+                                    '#f2f0f7';
+            };
+
+//
+// Style function for polygons.
+// Leaflet runs this for province features.
+// "feature.properties.POP10" grabs the data field.
+//           
+
+            function style(feature){
+                return{
+                    fillColor:getColor(feature.properties.POP10),
+                    weight: 2,
+                    opacity: 1,
+                    color: 'gray',
+                    fillOpacity: 0.9
+                };
+            }
+            
+//
+// Adds Provinces Layer.
+// The style function goes into geoJson.
+//         
+
+            var provinces = new L.geoJson(provinces,{style:style}).addTo(map);
+
+//
+// Circle size calculation.
+// Controls proportional symbol sizes/
+//
+
+            var minValue = 100;
+            var minRadius = 5;
+
+// Converts covid case values --> circle size.
+
+            function calcRadius(val){
+                return 0.9*Math.pow(val/minValue,.7)*minRadius;
+            }
+
+//
+// Popup function.
+// Runs on every covid point and builds HTML popup text.
+//
+
+            var onEachFeature = function(feature,layer){
+                if(feature.properties){
+                    var prop = feature.properties;
+
+                    var popup =
+                        '<h3>'+prop['Location']+'</h3>'+
+                        '<br>Cases Day 1: '+prop['1']+
+                        '<br>Cases Final Day: '+prop['covid'];
+                    
+                    layer.bindPopup(popup,{maxWidth:"auto"});
+                }
+            };
+
+//
+// Covid point layer.
+// pointToLayer replaces default markers with circle markers.
+//
+
+            var covidData = new L.geoJson(covidData,{
+                onEachFeature:onEachFeature,
+                pointToLayer:function(feature,ll){
+                    return L.circleMarker(ll,{
+                        color:'#000000',
+                        weight:2,
+                        opacity:1,
+                        fillColor:'#cc0000',
+                        fillOpacity:.6,
+
+// Radius comes from your calculations function
+
+                        radius:calcRadius(feature.properties.covid)
+                    });
+                }
+            }).addTo(map);
+
+//
+// Layer Control
+// this builds the toggle panel on the map.
+//
+
+            var basemaps = {
+                "Light Canvas":canvas,
+                "Satellite Imagery":imagery
+            };
+
+            var overlaymaps = {
+                "China Provinces":provinces,
+                "Covid Data": covidData
+            };
+
+            L.control.layers(basemaps,overlaymaps,{collapsed:false}).addTo(map);
+            
+//
+// Legend
+// Creates the color legend using the same getColor() function.
+//
+
+            var legend = L.control({position:'bottomright'});
+
+            legend.onAdd=function(map){
+
+                var div = L.DomUtil.create('div','legend'),
+                    grades=[0,5000000,10000000,25000000,50000000];
+
+                div.innerHTML='<b>Population</b><br><br>';
+
+                for(var i=0;i<grades.length;i++){
+                    div.innerHTML +=
+                        '<i style="background:'+getColor(grades[i]+1)+'"></i>'+
+                        grades[i]+(grades[i+1]?'&ndash;'+grades[i+1]+'<br>':'+');
+                }
+
+                return div;
+            };
+
+//
+//Legend Toggle
+//
+
+            legend.addTo(map);
+
+// When on overlay is turned off.
+            map.on('overlayremove',function(eventLayer){
+                if(eventLayer.name === "China Provinces"){
+                    map.removeControl(legend);
+                }
+            });
+
+// When an overlay is turned on.
+            map.on('overlayadd',function(eventLayer){
+                if(eventLayer.name === "China Provinces"){
+                    legend.addTo(map);
+                }
+            });
+
+            </script>
+    </body>
+</html>
