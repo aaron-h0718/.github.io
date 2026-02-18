@@ -103,7 +103,7 @@
                 pointToLayer: function(data,latlng){
                     return L.circleMarker(latlng,{
                         radius: calcRadius(data.properties.EV_EV),
-                        color: getColorFor(data.properties.DIFF),
+                        color: "#333",
                         fillColor: getColorFor(data.properties.DIFF),
                         fillOpacity: 0.8,
                         weight: 1
@@ -123,6 +123,7 @@
     <script src="https://aaron-h0718.github.io/LAB04/statepolls_centroids_moved.jsonp"></script>
     </body>
 </html>
+
 
 
 
