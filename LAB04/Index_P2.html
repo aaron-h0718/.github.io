@@ -105,7 +105,8 @@
                         radius: calcRadius(data.properties.EV_EV),
                         color: getColorFor(data.properties.DIFF),
                         fillColor: getColorFor(data.properties.DIFF),
-                        }).bindPopup('<p>' + 'Electoral votes:' + data.properties.EV_EV + '</p>');
+                        fillOpacity: 0.8,
+                        }).bindPopup('<p>Electoral votes:' + data.properties.EV_EV + '</p>');
                 },
             });
 
@@ -121,4 +122,5 @@
     <script src="https://aaron-h0718.github.io/LAB04/statepolls_centroids_moved.jsonp"></script>
     </body>
 </html>
+
 
