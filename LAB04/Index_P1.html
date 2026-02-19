@@ -39,13 +39,11 @@
                         '#cb181d';
             }
 
-            var background = L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/toner-background/{z}/{x}/{y}{r}.{ext}', {
-                attribution:'',
+            var background = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution:'&copy; OpenStreetMap &copy; CARTO',
                 subdomains:'abcd',
-                minZoom:0,
                 maxZoom:20,
-                ext:'png'
-});
+            });
             var map = L.map("map",{
                 layers: [background],
                 center: new L.LatLng(38,-95),
@@ -84,4 +82,5 @@
         </script>
         <script src="https://electionmaps.github.io/statepolls5.jsonp"></script>
     </body>
+
 </html>
