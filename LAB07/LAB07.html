@@ -132,7 +132,7 @@
 
                 var searchControl = L.control.fuseSearch(searchOptions);
 
-                searchControl.indexFeatures(firstlayer,['FNAME','LNAME']);
+                searchControl.indexFeatures(firstlayer._layers,['FNAME','LNAME']);
                 
                 searchControl.on('search:locationfound',function(e){
                     searchLayer.clearLayers();
@@ -155,6 +155,7 @@
             </script>
         </body>
     </html>
+
 
 
 
