@@ -132,7 +132,10 @@
 
                 var searchControl = L.control.fuseSearch(searchOptions);
 
-                searchControl.indexFeatures(omaJson,['FNAME','LNAME']);
+                searchControl.indexFeatures(
+                    omaJson.map(function(f){return f.properties;}),
+                    ['FNAME','LNAME']
+                );
 
                 searchControl.on('search:locationfound',function(e){
                     searchLayer.clearLayers();
@@ -155,4 +158,5 @@
             </script>
         </body>
     </html>
+
 
