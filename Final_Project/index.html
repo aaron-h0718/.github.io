@@ -50,6 +50,76 @@
                     layer.bindPopup("<b>Prefecture:</b> " + feature.properties.nam);
                 }
 
+                var populationData = {
+                    1: 524614, // Hokkaido
+                    2. 1237984,
+                    3: 1210534,
+                    4: 2301996,
+                    5: 959502,
+                    6: 1068027,
+                    7: 1833152,
+                    8: 2867009,
+                    9: 1933146,
+                    10: 1939110,
+                    11: 7344765,
+                    12: 6284480,
+                    13: 14047594, // Tokyo
+                    14: 9237337,
+                    15: 2201272,
+                    16: 1034814,
+                    17: 1132526,
+                    18: 766863,
+                    19: 809974,
+                    20: 2048011,
+                    21: 1978742,
+                    22: 3633202,
+                    23: 7483128,
+                    24: 1770254,
+                    25: 1413610,
+                    26: 2578087,
+                    27: 8837685,
+                    28: 5465002,
+                    29: 1324473,
+                    30: 914069,
+                    31: 553407,
+                    32: 671602,
+                    33: 1888432,
+                    34: 2799702,
+                    35: 1342059,
+                    36: 728633,
+                    37: 956069,
+                    38: 1334841,
+                    39: 691527,
+                    40: 5101556,
+                    41: 811442,
+                    42: 1312317,
+                    43: 1746740,
+                    44: 1123852,
+                    45: 1069576,
+                    46: 1594225,
+                    47: 1467480
+                };
+
+                function getColor(d) {
+                    return  d > 10000000 ? '#800026' :
+                            d > 5000000  ? '#BD0026' :
+                            d > 3000000  ? '#E31A1C' :
+                            d > 2000000  ? '#FC4E2A' :
+                            d > 1000000  ? '#FD8D3C' :
+                                           '#FFEDA0' :
+                }
+
+                function style(feature) {
+                    var pop = populationData[feature.properties.id];
+
+                    return {
+                        fillColor: getColor(pop),
+                        weight: 1,
+                        color: 'white',
+                        fillOpacity: 0.7
+                    };
+                }
+                        
                 Promise.all([
                     fetch('japan_prefectures.geojson').then(res => res.json()),
                     fetch('japan_volcanoes.geojson').then(res => res.json())
@@ -59,10 +129,7 @@
                     console.log("Both datasets loaded");
 
                     prefectureLayer = L.geoJSON(prefData,{
-                        style: {
-                            color: "blue",
-                            weight: 1,
-                            fillOpacity: 0.2
+                        style: style,
                         },
                         onEachFeature: onEachFeature
                     });
@@ -82,6 +149,8 @@
                             layer.bindPopup(
                                 "<b>Volcano:</b> " + feature.properties.Name +
                                 "<br><b>Last eruption:</b> " + feature.properties.LastEruption
+                                "<b>Prefecture:</b> " + feature.properties.nam +
+                                "<br><b>Population:</b> " + populationData[feature.properties.id].toLocaleString()
                             );
                         }
 
