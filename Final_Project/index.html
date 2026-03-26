@@ -33,15 +33,17 @@
             <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
             <script>
+                //Initialize map
                 var map = L.map('map').setView([36.5, 138], 5);
-
+                // Clean basemap (no labels)
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
                     attribution: '&copy; OpenStreetMap contributors & CartoDB'
                 }).addTo(map);
-
+                // Layer variables
                 var prefectureLayer;
                 var volcanoLayer;
-                
+                var earthquakeLayer;
+                // Highlight functions
                 function highlightFeature(e){
                     var layer = e.target;
                     
@@ -57,7 +59,7 @@
                 function resetHighlight(e){
                     prefectureLayer.resetStyle(e.target);
                 }
-
+                // Population data
                 var populationData = {
                     1: 5224614, // Hokkaido
                     2: 1237984,
@@ -107,7 +109,7 @@
                     46: 1594225,
                     47: 1467480
                 };
-
+                // Population color scale
                 function getColor(d) {
                     return  d > 10000000 ? '#800026' :
                             d > 5000000  ? '#BD0026' :
@@ -116,7 +118,7 @@
                             d > 1000000  ? '#FD8D3C' :
                                            '#FFEDA0';
                 }
-
+                // Choropleth style
                 function style(feature) {
                     var pop = populationData[feature.properties.id];
                     return {
@@ -126,8 +128,8 @@
                         fillOpacity: 0.7
                     };
                 }
-
-                 function onEachFeature(feature, layer){
+                // Prefecture interaction
+                function onEachFeature(feature, layer){
                     layer.on({
                         mouseover: highlightFeature,
                         mouseout: resetHighlight
@@ -140,20 +142,25 @@
                         "<br><b>Population:</b> " + pop.toLocaleString()
                     );
                 }
-                
+                // Earthquake color function
+                function getQuakeColor(mag) {
+                    return  mag > 5 ? 'red' :
+                            mag > 3 ? 'orange' :
+                                      'yellow';
+                }
+                // Load data
                 Promise.all([
                     fetch('japan_prefectures.geojson').then(res => res.json()),
                     fetch('japan_volcanoes.geojson').then(res => res.json())
                 ])
                 .then(([prefData, volcData]) => {
 
-                    console.log("Both datasets loaded");
-
+                    // Prefecture layer
                     prefectureLayer = L.geoJSON(prefData,{
                         style: style,
                         onEachFeature: onEachFeature
                     });
-
+                    // Volcano layer
                     volcanoLayer = L.geoJSON(volcData,{
                         pointToLayer: function(feature, latlng){
                             return L.circleMarker(latlng,{
@@ -164,7 +171,6 @@
                                 fillOpacity: 0.8
                             });
                         },
-
                         onEachFeature: function(feature, layer){
                             layer.bindPopup(
                                 "<b>Volcano:</b> " + feature.properties.Name +
@@ -173,31 +179,66 @@
                         }
 
                     });
-
+                    // Earthquake layer
+                    earthquakeLayer = L.geoJSON(null,{
+                        pointToLayer: function(feature, latlng){
+                            return L.circleMarker(latlng,{
+                                radius: feature.properties.mag * 2,
+                                fillColor: getQuakeColor(feature.properties.mag),
+                                color: "#000",
+                                weight: 1,
+                                fillOpacity: 0.7
+                            });
+                        },
+                        onEachFeature: function(feature, layer){
+                            layer.bindPopup(
+                                "<b>Magnitude:</b> " + feature.properties.mag +
+                                "<br><b>Location:</b> " + feature.properties.place
+                            );
+                        }
+                    });
+                    // Load USGS data
+                    fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson')
+                    .then(res => res.json())
+                    .then(data => {
+                        
+                        var japanQuakes = {
+                            type: "FeatureCollection",
+                            features: data.features.filter(function(feature) {
+                                var lon = feature.geometry.coordinates[0];
+                                var lat = feature.geometry.coordinates[1];
+                                return lat >= 31 && lat <= 45 && lon >= 130 && <= 145;
+                            })
+                        };
+                        
+                        earthquakeLayer.addData(japanQuakes);
+                    });
+                    // Add layers
                     prefectureLayer.addTo(map);
                     volcanoLayer.addTo(map);
-
+                    earthquakeLayer.addTo(map);
+                    // Layer control
                     var overlayMaps = {
                         "Prefectures": prefectureLayer,
-                        "Volcanoes": volcanoLayer
+                        "Volcanoes": volcanoLayer,
+                        "Earthquakes": earthquakeLayer
                     };
 
                     L.control.layers(null, overlayMaps).addTo(map);
+                    // Legend
+                    var legend = L.control({position: 'bottomright'});
 
-                var legend = L.control({position: 'bottomright'});
-
-                legend.onAdd = function(map) {
-
-                    var div = L.DomUtil.create('div', 'info legend'),
-                        grades = [0, 1000000, 2000000, 3000000, 5000000, 10000000],
-                        labels = [];
+                    legend.onAdd = function(map) {
+                        var div = L.DomUtil.create('div', 'info legend'),
+                            grades = [0, 1000000, 2000000, 3000000, 5000000, 10000000],
                     
-                    div.innerHTML += "<b>Population</b><br>";
+                        div.innerHTML += "<b>Population</b><br>";
 
-                    for (var i = 0; i < grades.length; i++) {
-                        div.innerHTML +=
-                            '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
-                            grades[i].toLocaleString() + (grades[i + 1] ? '&ndash;' + grades[i + 1].toLocaleString() + '<br>' : '+');
+                        for (var i = 0; i < grades.length; i++) {
+                            div.innerHTML +=
+                                '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
+                                grades[i].toLocaleString() + 
+                                (grades[i + 1] ? '&ndash;' + grades[i + 1].toLocaleString() + '<br>' : '+');
                     }
 
                     return div;
@@ -208,8 +249,8 @@
                 })
                 .catch(error => {
                     console.error("Error loading GeoJSON:", error);
-                    
                 });
+                
             </script>
         </body>
     </html>
