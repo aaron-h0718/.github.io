@@ -207,7 +207,7 @@
                             features: data.features.filter(function(feature) {
                                 var lon = feature.geometry.coordinates[0];
                                 var lat = feature.geometry.coordinates[1];
-                                return lat >= 31 && lat <= 45 && lon >= 130 && <= 145;
+                                return lat >= 31 && lat <= 45 && lon >= 130 && lon <= 145;
                             })
                         };
                         
@@ -230,7 +230,7 @@
 
                     legend.onAdd = function(map) {
                         var div = L.DomUtil.create('div', 'info legend'),
-                            grades = [0, 1000000, 2000000, 3000000, 5000000, 10000000],
+                            grades = [0, 1000000, 2000000, 3000000, 5000000, 10000000];
                     
                         div.innerHTML += "<b>Population</b><br>";
 
