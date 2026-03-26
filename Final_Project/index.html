@@ -22,7 +22,8 @@
                     attribution: '&copy; OpenStreetMap contributors'
                 }).addTo(map);
 
-                var geojson;
+                var prefectureLayer;
+                var volcanoLayer;
                 
                 function highlightFeature(e){
                     var layer = e.target;
@@ -37,7 +38,7 @@
                 }
 
                 function resetHighlight(e){
-                    geojson.resetStyle(e.target);
+                    prefectureLayer.resetStyle(e.target);
                 }
 
                 function onEachFeature(feature, layer){
@@ -49,54 +50,58 @@
                     layer.bindPopup("<b>Prefecture:</b> " + feature.properties.nam);
                 }
 
-                fetch('japan_prefectures.geojson')
-                    .then(response => {
-                        if (!response.ok){
-                            throw new Error("HTTP error " + response.status);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        console.log("GeoJSON loaded successfully");
-                        geojson = L.geoJSON(data,{
-                            style: {
-                                color: "blue",
+                Promise.all([
+                    fetch('japan_prefectures.geojson').then(res => res.json()),
+                    fetch('japan_volcanoes.geojson').then(res => res.json())
+                ])
+                .then(([prefData, volcData]) => {
+
+                    console.log("Both datasets loaded");
+
+                    prefectureLayer = L.geoJSON(prefData,{
+                        style: {
+                            color: "blue",
+                            weight: 1,
+                            fillOpacity: 0.2
+                        },
+                        onEachFeature: onEachFeature
+                    });
+
+                    volcanoLayer = L.geoJSON(volcData,{
+                        pointToLayer: function(feature, latlng){
+                            return L.circleMarker(latlng,{
+                                radius: 6,
+                                fillColor: "red",
+                                color: "#000",
                                 weight: 1,
-                                fillOpacity: 0.2
-                            },
-                            onEachFeature: onEachFeature                            
-                        }).addTo(map);
-                    })
-                    .catch(error => {
-                        console.error("Error loading GeoJSON:", error);
+                                fillOpacity: 0.8
+                            });
+                        },
+
+                        onEachFeature: function(feature, layer){
+                            layer.bindPopup(
+                                "<b>Volcano:</b> " + feature.properties.Name +
+                                "<br><b>Last eruption:</b> " + feature.properties.LastEruption
+                            );
+                        }
+
                     });
 
-                fetch('japan_volcanoes.geojson')
-                    .then(response => response.json())
-                    .then(data => {
+                    prefectureLayer.addTo(map);
+                    volcanoLayer.addTo(map);
 
-                        var volcanoLayer = L.geoJSON(data, {
+                    var overlayMaps = {
+                        "Prefectures": prefectureLayer,
+                        "Volcanoes": volcanoLayer
+                    };
 
-                            pointToLayer: function(feature, latlng) {
-                                return L.circleMarker(latlng, {
-                                    radius: 6,
-                                    fillColor: "red",
-                                    color: "#000",
-                                    weight: 1,
-                                    fillOpacity: 0.8
-                                });
-                            },
+                    L.control.layers(null, overlayMaps).addTo(map);
 
-                            onEachFeature: function(feature, layer) {
-                                layer.bindPopup(
-                                    "<b>Volcano:</b> " + feature.properties.Name +
-                                    "<br><b>Last eruption:</b> " + feature.properties.LastEruption
-                                );
-                            }
-                        
-                        }).addTo(map);
-                        
-                    });
+                })
+                .catch(error => {
+                    console.error("Error loading GeoJSON:", error);
+                    
+                });
             </script>
         </body>
     </html>
