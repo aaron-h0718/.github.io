@@ -40,7 +40,12 @@
                     attribution: '&copy; OpenStreetMap contributors & CartoDB'
                 }).addTo(map);
                 // Layers
-                var prefectureLayer, allVolcanoLayer, recentVolcanoLayer, volcanoBufferLayer, earthquakeLayer;
+                var prefectureLayer;
+                var allVolcanoLayer;
+                var recentVolcanoLayer;
+                var holoceneVolcanoLayer;
+                var volcanoBufferLayer;
+                var earthquakeLayer;
                 // Population Data & Style
                 var populationData = {
                     1: 5224614, 2: 1237984, 3: 1210534, 4: 2301996, 5: 959502,
@@ -68,17 +73,7 @@
                     return  mag > 5 ? 'red' :
                             mag > 3 ? 'orange' :
                                       'yellow';
-                }
-
-                function getVolcanoColor(status) {
-                    if (!status) return "gray";
-                    status = status.toLowerCase();
-
-                    return status.includes("active") ? "red" :
-                            status.includes("dormant") ? "orange" :
-                            status.includes("extinct") ? "gray" :
-                                                        "blue";
-                }
+                }        
                 
                 function createTriangleIcon(color) {
                     return L.divIcon({
@@ -134,9 +129,10 @@
                 // Load data
                 Promise.all([
                     fetch('japan_prefectures.geojson').then(res => res.json()),
-                    fetch('japan_volcanoes.geojson').then(res => res.json())
+                    fetch('japan_volcanoes.geojson').then(res => res.json()),
+                    fetch('japan_volcanoes_holocene.geojson').then(res => res.json())
                 ])
-                .then(([prefData, volcData]) => {
+                .then(([prefData, volcData, holoData]) => {
                     // Prefecture layer
                     prefectureLayer = L.geoJSON(prefData,{
                         style: style,
@@ -151,26 +147,30 @@
                                 color: "#000",
                                 weight: 1,
                                 fillOpacity: 0.8
-                            });
-                        },
+                        })                        
                     });
                     // Recent Volcanoes (triangle + status)
                     recentVolcanoLayer = L.geoJSON(volcData,{
                         filter: function(feature){
                             var year = parseInt(feature.properties.LastEruption);
                             return year >= 1500;
-                        },
+                        }
+                    });
+                    // Holocene (Active)
+                    holoceneVolcanoLayer = L.geoJSON(holoData, {
                         pointToLayer: function(feature, latlng){
-                            var color = getVolcanoColor(feature.properties.Status);
-                            return L.marker(latlng, {
-                                icon: createTriangleIcon(color)
+                            return L.circleMarker(latlng, {
+                                radius: 7,
+                                fillColor: "red",
+                                color: "#000",
+                                weight: 1,
+                                fillOpacity: 0.9
                             });
                         },
                         onEachFeature: function(feature, layer){
                             layer.bindPopup(
                                 "<b>Volcano:</b> " + feature.properties.Name +
-                                "<br><b>Status:</b> " + (feature.properties.Status || "Unknown") +
-                                "<br><b>Last eruption:</b> " + feature.properties.LastEruption
+                                "<br><b>Status:</b> Active (Holocene)"
                             );
                         }
                     });
@@ -181,15 +181,15 @@
                             return year >= 1500;
                         },
                         pointToLayer: function(feature, latlng){
-                            return L.circle(latlng,{
-                                radius: 50000,
+                            return L.circleMarker(latlng,{
+                                radius:5000,
                                 color: "red",
                                 weight: 1,
                                 fillColor: "red",
                                 fillOpacity: 0.1
                             });
                         }
-                    });
+                    });                 
                     // Earthquake layer
                     earthquakeLayer = L.geoJSON(null,{
                         pointToLayer: function(feature, latlng){
@@ -200,32 +200,27 @@
                                 weight: 1,
                                 fillOpacity: 0.7
                             });
-                        },
-                        onEachFeature: function(feature, layer){
-                            layer.bindPopup(
-                                "<b>Magnitude:</b> " + feature.properties.mag +
-                                "<br><b>Location:</b> " + feature.properties.place
-                            );
                         }
-                    });
+                    });                 
                     // Load USGS data
                     fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson')
                     .then(res => res.json())
                     .then(data => {                        
                         var japanQuakes = {
                             type: "FeatureCollection",
-                            features: data.features.filter(function(feature) {
+                            features: data.features.filter(function(feature){
                                 var lon = feature.geometry.coordinates[0];
-                                var lat = feature.geometry.coordinates[1];
+                                var lat = feature.geometry.coordinates[1];                                
                                 return lat >= 31 && lat <= 45 && lon >= 130 && lon <= 145;
                             })
-                        };                        
+                        });
                         earthquakeLayer.addData(japanQuakes);
                     });
                     // Add layers
                     prefectureLayer.addTo(map);
                     allVolcanoLayer.addTo(map);
                     recentVolcanoLayer.addTo(map);
+                    holoceneVolcanoLayer.addTo(map);
                     volcanoBufferLayer.addTo(map);
                     earthquakeLayer.addTo(map);
                     // Layer control
@@ -233,6 +228,7 @@
                         "Population": prefectureLayer,
                         "All Volcanoes": allVolcanoLayer,
                         "Recent Volcanoes": recentVolcanoLayer,
+                        "Active Volcanoes (Holocene)": holoceneVolcanoLayer,
                         "Volcano Buffers (50km)": volcanoBufferLayer,
                         "Earthquakes": earthquakeLayer
                     };
