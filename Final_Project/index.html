@@ -33,21 +33,69 @@
             <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
             <script>
-                //Initialize map
+                // Map Setup
                 var map = L.map('map').setView([36.5, 138], 5);
                 // Clean basemap (no labels)
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
                     attribution: '&copy; OpenStreetMap contributors & CartoDB'
                 }).addTo(map);
-                // Layer variables
-                var prefectureLayer;
-                var allVolcanoLayer;
-                var recentVolcanoLayer;
-                var volcanoBufferLayer;
-                var earthquakeLayer;
-           
+                // Layers
+                var prefectureLayer, allVolcanoLayer, recentVolcanoLayer, volcanoBufferLayer, earthquakeLayer;
+                           
                 });
-                // Highlight functions
+                // Population Data & Style
+                var populationData = {
+                    1: 5224614, 2: 1237984, 3: 1210534, 4: 2301996, 5: 959502,
+                    6: 1068027, 7: 1833152, 8: 2867009, 9: 1933146, 10: 1939110,
+                    11: 7344765, 12: 6284480, 13: 14047594, 14: 9237337, 15: 2201272,
+                    16: 1034814, 17: 1132526, 18: 766863, 19: 809974, 20: 2048011,
+                    21: 1978742, 22: 3633202, 23: 7483128, 24: 1770254, 25: 1413610,
+                    26: 2578087, 27: 8837685, 28: 5465002, 29: 1324473, 30: 914069,
+                    31: 553407, 32: 671602, 33: 1888432, 34: 2799702, 35: 1342059,
+                    36: 728633, 37: 956069, 38: 1334841, 39: 691527, 40: 5101556,
+                    41: 811442, 42: 1312317, 43: 1746740, 44: 1123852, 45: 1069576,
+                    46: 1594225, 47: 1467480
+                };
+                
+                function getColor(d) {
+                    return  d > 10000000 ? '#800026' :
+                            d > 5000000  ? '#BD0026' :
+                            d > 3000000  ? '#E31A1C' :
+                            d > 2000000  ? '#FC4E2A' :
+                            d > 1000000  ? '#FD8D3C' :
+                                           '#FFEDA0';            
+                }
+                
+                function getQuakeColor(mag) {
+                    return  mag > 5 ? 'red' :
+                            mag > 3 ? 'orange' :
+                                      'yellow';
+                }
+
+                function getVolcanoColor(status) {
+                    if (!status) return "gray";
+                    status = status.toLowerCase();
+
+                    return status.includes("active") ? "red" :
+                            status.includes("dormant") ? "orange" :
+                            status.includes("extinct") ? "gray" :
+                                                        "blue";
+                }
+                
+                function createTriangleIcon(color) {
+                    return L.divIcon({
+                        className: '',
+                        html: `<div style="
+                            width: 0;
+                            height: 0;
+                            border-left: 8px solid transparent;
+                            border-right: 8px solid transparent;
+                            border-bottom: 14px solid ${color};
+                        "></div>`,
+                        iconSize: [12, 12]
+                    });
+                }   
+                // Prefectures
                 function highlightFeature(e){
                     var layer = e.target;                    
                     layer.setStyle({
@@ -57,70 +105,11 @@
                     });
                     layer.bringToFront();
                 }
-
+                
                 function resetHighlight(e){
                     prefectureLayer.resetStyle(e.target);
                 }
-                // Population data
-                var populationData = {
-                    1: 5224614, // Hokkaido
-                    2: 1237984,
-                    3: 1210534,
-                    4: 2301996,
-                    5: 959502,
-                    6: 1068027,
-                    7: 1833152,
-                    8: 2867009,
-                    9: 1933146,
-                    10: 1939110,
-                    11: 7344765,
-                    12: 6284480,
-                    13: 14047594, // Tokyo
-                    14: 9237337,
-                    15: 2201272,
-                    16: 1034814,
-                    17: 1132526,
-                    18: 766863,
-                    19: 809974,
-                    20: 2048011,
-                    21: 1978742,
-                    22: 3633202,
-                    23: 7483128,
-                    24: 1770254,
-                    25: 1413610,
-                    26: 2578087,
-                    27: 8837685,
-                    28: 5465002,
-                    29: 1324473,
-                    30: 914069,
-                    31: 553407,
-                    32: 671602,
-                    33: 1888432,
-                    34: 2799702,
-                    35: 1342059,
-                    36: 728633,
-                    37: 956069,
-                    38: 1334841,
-                    39: 691527,
-                    40: 5101556,
-                    41: 811442,
-                    42: 1312317,
-                    43: 1746740,
-                    44: 1123852,
-                    45: 1069576,
-                    46: 1594225,
-                    47: 1467480
-                };
-                // Population color scale
-                function getColor(d) {
-                    return  d > 10000000 ? '#800026' :
-                            d > 5000000  ? '#BD0026' :
-                            d > 3000000  ? '#E31A1C' :
-                            d > 2000000  ? '#FC4E2A' :
-                            d > 1000000  ? '#FD8D3C' :
-                                           '#FFEDA0';            
-                }
-                // Choropleth style
+                
                 function style(feature) {
                     var pop = populationData[feature.properties.id];
                     return {
@@ -130,7 +119,7 @@
                         fillOpacity: 0.7
                     };
                 }
-                // Prefecture interaction
+                
                 function onEachFeature(feature, layer){
                     layer.on({
                         mouseover: highlightFeature,
@@ -143,37 +132,7 @@
                         "<b>Prefecture:</b> " + feature.properties.nam +
                         "<br><b>Population:</b> " + pop.toLocaleString()
                     );
-                }
-                // Earthquake color function
-                function getQuakeColor(mag) {
-                    return  mag > 5 ? 'red' :
-                            mag > 3 ? 'orange' :
-                                      'yellow';
-                }
-
-                function getVolcanoColor(statue) {
-                    if (!status) return "gray";
-                    status = status.toLowerCase();
-
-                    return status.includes("active") ? "red" :
-                           status.includes("dormant") ? "orange" :
-                           status.includes("extinct") ? "gray" :
-                                                        "blue";
-                }
-                // Triangle Icon Creator
-                function createTriangleIcon(color) {
-                    return L.divIcon({
-                        className: '',
-                        html: `<div style="
-                            width: 0;
-                            height: 0;
-                            border-left: 8px solid transparent;
-                            border-right: 8px solid transparent;
-                            border-bottom: 14px solid ${color};
-                        "></div>`
-                        iconSize: [12, 12]
-                    });
-                }
+                }              
                 // Load data
                 Promise.all([
                     fetch('japan_prefectures.geojson').then(res => res.json()),
@@ -198,24 +157,26 @@
                             });
                         },
                     });
-                    // Recent Volcanoes (last 500 years)
+                    // Recent Volcanoes (triangle + status)
                     recentVolcanoLayer = L.geoJSON(volcData,{
                         filter: function(feature){
                             var year = parseInt(feature.properties.LastEruption);
                             return year >= 1500;
                         },
                         pointToLayer: function(feature, latlng){
-                            return L.marker(latlng, {icon: triangleIcon});
+                            var color = getVolcanoColor(feature,properties.Status);
+                            return L.marker(latlng, {
+                                icon: createTriangleIcon(color)
                             });
                         },
                         onEachFeature: function(feature, layer){
                             layer.bindPopup(
-                                "<b>Recent Volcano:</b> " + feature.properties.Name +
+                                "<b>Volcano:</b> " + feature.properties.Name +
+                                "<br><b>Status:</b> " + (feature.properties.Status || "Unknown") +
                                 "<br><b>Last eruption:</b> " + feature.properties.LastEruption
                             );
                         }
                     });
-
                     // Volcano Buffers (50 km)
                     volcanoBufferLayer = L.geoJSON(volcData,{
                         filter: function(feature){
@@ -232,7 +193,6 @@
                             });
                         }
                     });
-
                     // Earthquake layer
                     earthquakeLayer = L.geoJSON(null,{
                         pointToLayer: function(feature, latlng){
@@ -273,10 +233,10 @@
                     earthquakeLayer.addTo(map);
                     // Layer control
                     var overlayMaps = {
-                        "Prefectures": prefectureLayer,
+                        "Population": prefectureLayer,
                         "All Volcanoes": allVolcanoLayer,
-                        "Recent Volcanoes (500 yrs)": recentVolcanoLayer,
-                        "Volcano Impact Zones (50 km)": volcanoBufferLayer,
+                        "Recent Volcanoes": recentVolcanoLayer,
+                        "Volcano Buffers (50km)": volcanoBufferLayer,
                         "Earthquakes": earthquakeLayer
                     };
 
