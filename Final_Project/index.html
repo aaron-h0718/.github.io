@@ -147,13 +147,19 @@
                                 color: "#000",
                                 weight: 1,
                                 fillOpacity: 0.8
-                        })                        
+                            });
+                        }       
                     });
                     // Recent Volcanoes (triangle + status)
                     recentVolcanoLayer = L.geoJSON(volcData,{
                         filter: function(feature){
                             var year = parseInt(feature.properties.LastEruption);
                             return year >= 1500;
+                        },
+                        pointToLayer: function(feature, latlng){
+                            return L.marker(latlng, {
+                                icon: createTriangleIcon("orange")
+                            });
                         }
                     });
                     // Holocene (Active)
@@ -182,7 +188,7 @@
                         },
                         pointToLayer: function(feature, latlng){
                             return L.circleMarker(latlng,{
-                                radius:5000,
+                                radius:50000,
                                 color: "red",
                                 weight: 1,
                                 fillColor: "red",
