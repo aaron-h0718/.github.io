@@ -22,7 +22,7 @@
                     float: left;
                     margin-right: 8px;
                     opacity: 0.7;
-                }          
+                }     
                     
             </style>
         </head>
@@ -137,7 +137,6 @@
                     fetch('japan_volcanoes.geojson').then(res => res.json())
                 ])
                 .then(([prefData, volcData]) => {
-
                     // Prefecture layer
                     prefectureLayer = L.geoJSON(prefData,{
                         style: style,
@@ -162,7 +161,7 @@
                             return year >= 1500;
                         },
                         pointToLayer: function(feature, latlng){
-                            var color = getVolcanoColor(feature,properties.Status);
+                            var color = getVolcanoColor(feature.properties.Status);
                             return L.marker(latlng, {
                                 icon: createTriangleIcon(color)
                             });
@@ -183,8 +182,8 @@
                         },
                         pointToLayer: function(feature, latlng){
                             return L.circle(latlng,{
-                                radius: 5000,
-                                color "red",
+                                radius: 50000,
+                                color: "red",
                                 weight: 1,
                                 fillColor: "red",
                                 fillOpacity: 0.1
