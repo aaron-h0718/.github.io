@@ -22,15 +22,7 @@
                     float: left;
                     margin-right: 8px;
                     opacity: 0.7;
-                }
-
-                .triangle-icon {
-                    width: 0;
-                    height: 0;
-                    border-left: 8px solid transparent;
-                    border-right: 8px solid transparent;
-                    border-bottom: 14px solid red;
-                }
+                }          
                     
             </style>
         </head>
@@ -50,24 +42,19 @@
                 // Layer variables
                 var prefectureLayer;
                 var allVolcanoLayer;
-                var recentVolcanoLayer
+                var recentVolcanoLayer;
+                var volcanoBufferLayer;
                 var earthquakeLayer;
-                // Triangle Icon
-                var triangleIcon = L.divIcon({
-                    className: 'triangle-icon',
-                    html: '',
-                    iconSize: [12, 12]
+           
                 });
                 // Highlight functions
                 function highlightFeature(e){
-                    var layer = e.target;
-                    
+                    var layer = e.target;                    
                     layer.setStyle({
                         weight: 3,
                         color: '#666',
                         fillOpacity: 0.7
                     });
-
                     layer.bringToFront();
                 }
 
@@ -131,7 +118,7 @@
                             d > 3000000  ? '#E31A1C' :
                             d > 2000000  ? '#FC4E2A' :
                             d > 1000000  ? '#FD8D3C' :
-                                           '#FFEDA0';
+                                           '#FFEDA0';            
                 }
                 // Choropleth style
                 function style(feature) {
@@ -163,6 +150,30 @@
                             mag > 3 ? 'orange' :
                                       'yellow';
                 }
+
+                function getVolcanoColor(statue) {
+                    if (!status) return "gray";
+                    status = status.toLowerCase();
+
+                    return status.includes("active") ? "red" :
+                           status.includes("dormant") ? "orange" :
+                           status.includes("extinct") ? "gray" :
+                                                        "blue";
+                }
+                // Triangle Icon Creator
+                function createTriangleIcon(color) {
+                    return L.divIcon({
+                        className: '',
+                        html: `<div style="
+                            width: 0;
+                            height: 0;
+                            border-left: 8px solid transparent;
+                            border-right: 8px solid transparent;
+                            border-bottom: 14px solid ${color};
+                        "></div>`
+                        iconSize: [12, 12]
+                    });
+                }
                 // Load data
                 Promise.all([
                     fetch('japan_prefectures.geojson').then(res => res.json()),
@@ -193,16 +204,32 @@
                             var year = parseInt(feature.properties.LastEruption);
                             return year >= 1500;
                         },
-
                         pointToLayer: function(feature, latlng){
                             return L.marker(latlng, {icon: triangleIcon});
+                            });
                         },
-
                         onEachFeature: function(feature, layer){
                             layer.bindPopup(
                                 "<b>Recent Volcano:</b> " + feature.properties.Name +
                                 "<br><b>Last eruption:</b> " + feature.properties.LastEruption
                             );
+                        }
+                    });
+
+                    // Volcano Buffers (50 km)
+                    volcanoBufferLayer = L.geoJSON(volcData,{
+                        filter: function(feature){
+                            var year = parseInt(feature.properties.LastEruption);
+                            return year >= 1500;
+                        },
+                        pointToLayer: function(feature, latlng){
+                            return L.circle(latlng,{
+                                radius: 5000,
+                                color "red",
+                                weight: 1,
+                                fillColor: "red",
+                                fillOpacity: 0.1
+                            });
                         }
                     });
 
@@ -227,8 +254,7 @@
                     // Load USGS data
                     fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson')
                     .then(res => res.json())
-                    .then(data => {
-                        
+                    .then(data => {                        
                         var japanQuakes = {
                             type: "FeatureCollection",
                             features: data.features.filter(function(feature) {
@@ -243,12 +269,14 @@
                     prefectureLayer.addTo(map);
                     allVolcanoLayer.addTo(map);
                     recentVolcanoLayer.addTo(map);
+                    volcanoBufferLayer.addTo(map);
                     earthquakeLayer.addTo(map);
                     // Layer control
                     var overlayMaps = {
                         "Prefectures": prefectureLayer,
                         "All Volcanoes": allVolcanoLayer,
                         "Recent Volcanoes (500 yrs)": recentVolcanoLayer,
+                        "Volcano Impact Zones (50 km)": volcanoBufferLayer,
                         "Earthquakes": earthquakeLayer
                     };
 
