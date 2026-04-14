@@ -182,7 +182,7 @@
                                 return "<b>Volcano:</b> " + feature.properties.Name +
                                 "<br><b>Last Eruption:</b> " + feature.properties.LastEruption +
                                 "<br><b>Population within 50 km:</b> " + pop.toLocaleString();
-                            );
+                            });
                         }
                     });
                     // Recent Volcanoes (triangle + status)
@@ -204,7 +204,7 @@
                                 "<br><b>Last Eruption:</b> " + feature.properties.LastEruption +
                                 "<br><b>Status:</b> Recent (after 1500)" +
                                 "<br><b>Population within 50 km:</b> " + pop.toLocaleString();
-                            );
+                            });
                         }
                     });
                     // Holocene (Active)
@@ -222,7 +222,7 @@
                                 "<br><b>Status:</b> Active (Holocene)" +
                                 "<br><i>Erupted within the last ~11,700 years</i>" +
                                 "<br><b>Population within 50 km:</b> " + pop.toLocaleString();
-                            );
+                            });
                         }
                     });
                     // Volcano Buffers (50 km)
@@ -241,7 +241,7 @@
                                 interactive: false,
                                 pane: 'shadowPane'
                             });
-                        },                    
+                        }                    
                     });                 
                     // Earthquake layer
                     earthquakeLayer = L.geoJSON(null,{
