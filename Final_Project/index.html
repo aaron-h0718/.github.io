@@ -243,7 +243,7 @@
                     // Legend
                     var legend = L.control({position: 'bottomright'});
 
-                    legend.onAdd = function(map) {
+                    legend.onAdd = function() {
                         var div = L.DomUtil.create('div', 'info legend'),
                             grades = [0, 1000000, 2000000, 3000000, 5000000, 10000000];
                     
