@@ -27,6 +27,35 @@
                     margin-right: 8px;
                     opacity: 0.7;
                 }
+
+                .quake-icon {
+                    position: relative;
+                    width: 12px;
+                    height: 12px;
+                    background: red;
+                    border-radius: 50%;
+                }
+
+                .quake-icon::before,
+                .quake-icon::after {
+                    content: '';
+                    position: absolute;
+                    top: -6px;
+                    left: -6px;
+                    width: 24px;
+                    height: 24px;
+                    border: 2px solid red;
+                    border-radius: 50%;
+                    opacity: 0.5;
+                }
+
+                .quake-icon::after {
+                    top: -12px;
+                    left: -12px;
+                    width: 36px;
+                    height: 36px;
+                    opacity: 0.3;
+                }
                 
             </style>
         </head>
@@ -78,6 +107,43 @@
                             mag > 3 ? 'orange' :
                                       'yellow';
                 }        
+
+                function createQuakeIcon(color){
+                    return L.divIcon({
+                        className: '',
+                        html: `
+                        <div style="
+                            position: relative;
+                            width: 12px;
+                            height: 12px;
+                            background: ${color};
+                            border-radius: 50%;
+                        ">
+                            <div style="
+                                position: absolute;
+                                top: -6px;
+                                left: -6px;
+                                width: 24px;
+                                height: 24px;
+                                border: 2px solid ${color};
+                                border-radius: 50%;
+                                opacity: 0.5;
+                            "></div>
+                            <div style="
+                                position: absolute;
+                                top: -12px;
+                                left: -12px;
+                                width: 36px;
+                                height: 36px;
+                                border: 2px solid ${color};
+                                border-radius: 50%;
+                                opacity: 0.3;
+                            "></div>
+                        </div>
+                        `,
+                        iconSize: [20,20]
+                    });
+                }
                 
                 function createTriangleIcon(color) {
                     return L.divIcon({
@@ -137,7 +203,7 @@
                 .then(([prefData, volcData, holoData]) => {
                     // Prefecture layer
                     prefectureLayer = L.geoJSON(prefData,{
-                        pane: 'tilePane',
+                        pane: 'overlayPane',
                         style: function(feature) {
                             var pop = populationData[feature.properties.id];
                             return {
@@ -156,7 +222,7 @@
                         var key = latlng.lat.toFixed(3) + "," + latlng.lng.toFixed(3);
                         if (key in exposureCache) return exposureCache[key];
                         var point = turf.point([latlng.lng, latlng.lat]);
-                        var buffer = turf.buffer(point, 50, { units: 'kilometers', steps: 8 });
+                        var buffer = turf.buffer(point, 50, { units: 'kilometers', steps: 4 });
                         var totalPop = 0;
                         prefectureLayer.eachLayer(function(layer) {
                             var poly = layer.feature;
@@ -206,7 +272,7 @@
                                 "<br><b>Population within 50 km:</b> " + pop.toLocaleString();
                             });
                         }
-                    }).addTo(map);
+                    });
                     // Recent Volcanoes (triangle + status)
                     recentVolcanoLayer = L.geoJSON(volcData,{
                         filter: function(feature){
@@ -229,7 +295,7 @@
                                 "<br><b>Population within 50 km:</b> " + pop.toLocaleString();
                             });
                         }
-                    }).addTo(map);
+                    });
                     // Holocene (Active)
                     holoceneVolcanoLayer = L.geoJSON(holoData, {
                         pointToLayer: function(feature, latlng){
@@ -248,7 +314,7 @@
                                 "<br><b>Population within 50 km:</b> " + pop.toLocaleString();
                             });
                         }
-                    }).addTo(map);
+                    });
                     // Volcano Buffers (50 km)
                     volcanoBufferLayer = L.geoJSON(volcData,{
                         filter: function(feature){
@@ -270,12 +336,9 @@
                     // Earthquake layer
                     earthquakeLayer = L.geoJSON(null,{
                         pointToLayer: function(feature, latlng){
-                            return L.circleMarker(latlng,{
-                                radius: feature.properties.mag * 2,
-                                fillColor: getQuakeColor(feature.properties.mag),
-                                color: "#000",
-                                weight: 1,
-                                fillOpacity: 0.7
+                            var color = getQuakeColor(feature.properties.mag);
+                            return L.marker(latlng,{
+                                icon: createQuakeIcon(color)                           
                             });
                         },
                         onEachFeature: function(feature, layer){
@@ -294,7 +357,7 @@
                             features: data.features.filter(function(feature){
                                 var lon = feature.geometry.coordinates[0];
                                 var lat = feature.geometry.coordinates[1];                                
-                                return lat >= 31 && lat <= 45 && lon >= 130 && lon <= 145;
+                                return lat >= 31 && lat <= 45 && lon >= 130 && lon <= 145 && feature.properties.mag >= 2.5;
                             })
                         };
                         earthquakeLayer.addData(japanQuakes);
