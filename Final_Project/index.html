@@ -163,13 +163,30 @@
                         });
 
                         return totalPop;
-                    }                  
+                    }
+
+                    function getRiskColor(pop) {
+                        return  pop > 5000000 ? "red" :
+                                pop > 1000000 ? "orange" :
+                                pop > 500000  ? "yellow" :
+                                                "green";
+                    }
+
+                    function getRiskLevel(pop) {
+                        return  pop > 5000000 ? "Extreme" :
+                                pop > 1000000 ? "High" :
+                                pop > 500000  ? "Moderate" :
+                                                "Low";
+                    }
                     // All Volcanoes
                     allVolcanoLayer = L.geoJSON(volcData,{
                         pointToLayer: function(feature, latlng){
+                            var pop = calculatePopulationExposure(latlng);
+                            var color = getRiskColor(pop);
+                            
                             return L.circleMarker(latlng,{
                                 radius: 6,
-                                fillColor: "red",
+                                fillColor: color,
                                 color: "#000",
                                 weight: 1,
                                 fillOpacity: 0.8
@@ -181,6 +198,7 @@
 
                                 return "<b>Volcano:</b> " + feature.properties.Name +
                                 "<br><b>Last Eruption:</b> " + feature.properties.LastEruption +
+                                "<br><b>Risk Level:</b> " + getRiskLevel(pop) +
                                 "<br><b>Population within 50 km:</b> " + pop.toLocaleString();
                             });
                         }
@@ -192,8 +210,11 @@
                             return !isNaN(year) && year >= 1500;
                         },
                         pointToLayer: function(feature, latlng){
+                            var pop = calculatePopulationExposure(latlng);
+                            var color = getRiskColor(pop);
+                            
                             return L.marker(latlng, {
-                                icon: createTriangleIcon("orange")
+                                icon: createTriangleIcon(color)
                             });
                         },
                         onEachFeature: function(feature, layer){
@@ -203,6 +224,7 @@
                                 return "<b>Volcano:</b> " + feature.properties.Name +
                                 "<br><b>Last Eruption:</b> " + feature.properties.LastEruption +
                                 "<br><b>Status:</b> Recent (after 1500)" +
+                                "<br><b>Risk Level:</b> " + getRiskLevel(pop) +
                                 "<br><b>Population within 50 km:</b> " + pop.toLocaleString();
                             });
                         }
@@ -210,8 +232,11 @@
                     // Holocene (Active)
                     holoceneVolcanoLayer = L.geoJSON(holoData, {
                         pointToLayer: function(feature, latlng){
+                            var pop = calculatePopulationExposure(latlng);
+                            var color = getRiskColor(pop);
+
                             return L.marker(latlng, {
-                                icon: createTriangleIcon("red")                          
+                                icon: createTriangleIcon(color)                         
                             });
                         },
                         onEachFeature: function(feature, layer){
@@ -221,6 +246,7 @@
                                 return "<b>Volcano:</b> " + feature.properties.Name +
                                 "<br><b>Status:</b> Active (Holocene)" +
                                 "<br><i>Erupted within the last ~11,700 years</i>" +
+                                "<br><b>Risk Level:</b> " + getRiskLevel(pop) +
                                 "<br><b>Population within 50 km:</b> " + pop.toLocaleString();
                             });
                         }
@@ -312,45 +338,34 @@
     
                         if (map.hasLayer(allVolcanoLayer) || map.hasLayer(recentVolcanoLayer) || map.hasLayer(holoceneVolcanoLayer)) {
                             div.innerHTML += "<b>Map Symbols</b><br>";
-                            div.innerHTML += "<div style='margin-bottom:4px;'></div>";
-                        }
 
-                        if (map.hasLayer(allVolcanoLayer)) {
-                            div.innerHTML += '<div style="display:flex;"><div style="width:10px;height:10px;background:red;border-radius:50%;margin-right:6px;"></div>All Volcanoes</div>';
-                        }
-
-                        if (map.hasLayer(recentVolcanoLayer)) {
-                            div.innerHTML += '<div style="display:flex;"><div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:10px solid orange;margin-right:6px;"></div>Recent (after 1500)</div>';
-                        }
-
-                        if (map.hasLayer(holoceneVolcanoLayer)) {
-                            div.innerHTML += '<div style="display:flex;"><div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:10px solid red;margin-right:6px;"></div>Holocene (~11,700 yrs)</div>';
+                            div.innerHTML += "<hr><b>Volcano Risk</b><br>";
+                            div.innerHTML += '<i style="background:red"></i> Extreme (>5M)<br>';
+                            div.innerHTML += '<i style="background:orange"></i> High (1M–5M)<br>';
+                            div.innerHTML += '<i style="background:yellow"></i> Moderate (500k–1M)<br>';
+                            div.innerHTML += '<i style="background:green"></i> Low (<500k)<br>';
                         }
 
                         if (map.hasLayer(volcanoBufferLayer)) {
                             div.innerHTML += '<div style="display:flex;"><div style="width:12px;height:12px;border:1px solid red;background:rgba(255,0,0,0.2);margin-right:6px;"></div>50 km Impact Zone</div>';
                         }
-    
+
                         if (map.hasLayer(earthquakeLayer)) {
-                            div.innerHTML += "<hr style='margin:6px 0;'><b>Earthquakes</b><br>";
+                            div.innerHTML += "<hr><b>Earthquakes</b><br>";
                             div.innerHTML += '<i style="background:red"></i> > 5<br>';
                             div.innerHTML += '<i style="background:orange"></i> 3–5<br>';
                             div.innerHTML += '<i style="background:yellow"></i> < 3<br>';
-                            div.innerHTML += "<div style='margin-top:4px;font-size:12px;'>Circle size = magnitude</div>";
                         }
-    
-                        if (map.hasLayer(prefectureLayer)) {
-                            div.innerHTML += "<hr style='margin:6px 0;'><b>Population</b><br>";
 
+                        if (map.hasLayer(prefectureLayer)) {
+                            div.innerHTML += "<hr><b>Population</b><br>";
                             for (var i = 0; i < grades.length; i++) {
-                                div.innerHTML +=
-                                    '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
-                                    grades[i].toLocaleString() +
-                                    (grades[i + 1] ? '&ndash;' + grades[i + 1].toLocaleString() + '<br>' : '+');
+                                div.innerHTML += '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
+                                grades[i] + (grades[i+1] ? '&ndash;' + grades[i+1] + '<br>' : '+');
                             }
                         }
                     }
-                    
+
                     map.on('overlayadd', updateLegend);
                     map.on('overlayremove', updateLegend);
                 })
