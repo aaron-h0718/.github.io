@@ -219,7 +219,7 @@
                                 var lat = feature.geometry.coordinates[1];                                
                                 return lat >= 31 && lat <= 45 && lon >= 130 && lon <= 145;
                             })
-                        });
+                        };
                         earthquakeLayer.addData(japanQuakes);
                     });
                     // Add layers
