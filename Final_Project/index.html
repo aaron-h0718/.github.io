@@ -14,6 +14,8 @@
                     line-height: 18px;
                     color: #333;
                     border-radius: 5px;
+                    font-size: 13px;
+                    box-shadow: 0 0 10px rgba(0,0,0,0.2);
                 }
 
                 .info.legend i {
@@ -22,12 +24,7 @@
                     float: left;
                     margin-right: 8px;
                     opacity: 0.7;
-                }
-
-                .info.legend {
-                    font-size: 13px;
-                    box-shadow: 0 0 10px rgba(0,0,0,0.2);
-                }
+                }          
                     
             </style>
         </head>
@@ -176,7 +173,7 @@
                             layer.bindPopup(
                                 "<b>Volcano:</b> " + feature.properties.Name +
                                 "<br><b>Last Eruption:</b> " + feature.properties.LastEruption +
-                                "<br><b>Status:</b> Recent"
+                                "<br><b>Status:</b> Recent (after 1500)"
                             );
                         }
                     });
@@ -190,7 +187,8 @@
                         onEachFeature: function(feature, layer){
                             layer.bindPopup(
                                 "<b>Volcano:</b> " + feature.properties.Name +
-                                "<br><b>Status:</b> Active (Holocene)"
+                                "<br><b>Status:</b> Active (Holocene)" +
+                                "<br><i>Erupted within the last ~11,700 years</i>"
                             );
                         }
                     });
@@ -208,7 +206,8 @@
                                 fillColor: "red",
                                 fillOpacity: 0.1
                             });
-                        }
+                        },
+                        interactive: false
                     });                 
                     // Earthquake layer
                     earthquakeLayer = L.geoJSON(null,{
@@ -269,39 +268,18 @@
                         // Symbols
                         div.innerHTML += "<b>Map Symbols</b><br>";
 
-                        div.innerHTML +=
-                            '<div style="display:flex;align-items:center;margin-bottom:4px;">' +
-                            '<div style="width:10px;height:10px;background:red;border-radius:50%;margin-right:6px;"></div>' +
-                            'All Volcanoes</div>';
+                        div.innerHTML += '<div style="display:flex;"><div style="width:10px;height:10px;background:red;border-radius:50%;margin-right:6px;"></div>All Volcanoes</div>';
+                        div.innerHTML += '<div style="display:flex;"><div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:10px solid orange;margin-right:6px;"></div>Recent (after 1500)</div>';
+                        div.innerHTML += '<div style="display:flex;"><div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:10px solid red;margin-right:6px;"></div>Holocene (~11,700 yrs)</div>';
+                        div.innerHTML += '<div style="display:flex;"><div style="width:12px;height:12px;border:1px solid red;background:rgba(255,0,0,0.2);margin-right:6px;"></div>50 km Impact Zone</div>';
 
-                        div.innerHTML +=
-                            '<div style="display:flex;align-items:center;margin-bottom:4px;">' +
-                            '<div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:10px solid orange;margin-right:6px;"></div>' +
-                            'Recent Eruptions (after 1500)</div>';
+                        div.innerHTML += "<hr><b>Earthquakes</b><br>";
+                        div.innerHTML += '<i style="background:red"></i> > 5<br>';
+                        div.innerHTML += '<i style="background:orange"></i> 3–5<br>';
+                        div.innerHTML += '<i style="background:yellow"></i> < 3<br>';
+                        div.innerHTML += "<i>Size = magnitude</i><br>";
 
-                        div.innerHTML +=
-                            '<div style="display:flex;align-items:center;margin-bottom:4px;">' +
-                            '<div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:10px solid red;margin-right:6px;"></div>' +
-                            'Active Volcanoes (Holocene)</div>';
-
-                        div.innerHTML +=
-                            '<div style="display:flex;align-items:center;margin-bottom:4px;">' +
-                            '<div style="width:12px;height:12px;border:1px solid red;background:rgba(255,0,0,0.2);margin-right:6px;"></div>' +
-                            '50 km Impact Zone</div>';
-
-                        div.innerHTML += "<hr>";
-                        // Earthquakes
-                        div.innerHTML += "<b>Earthquakes</b><br>";
-
-                        div.innerHTML += '<i style="background:red"></i> Magnitude > 5<br>';
-                        div.innerHTML += '<i style="background:orange"></i> Magnitude 3–5<br>';
-                        div.innerHTML += '<i style="background:yellow"></i> Magnitude < 3<br>';
-
-                        div.innerHTML += "<span style='font-size:12px;'>Circle size = magnitude</span><br>";
-
-                        div.innerHTML += "<hr>";
-                        // Population Legend
-                        div.innerHTML += "<b>Population</b><br>";
+                        div.innerHTML += "<hr><b>Population</b><br>";
 
                         for (var i = 0; i < grades.length; i++) {
                             div.innerHTML +=
