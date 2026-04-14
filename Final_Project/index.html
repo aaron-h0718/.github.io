@@ -13,7 +13,10 @@
                     padding: 10px;
                     line-height: 18px;
                     color: #333;
-                    border-radius: 5px;                   
+                    border-radius: 5px;
+                    font-size: 13px;
+                    line-height: 20px;
+                    box-shadow: 0 0 10px rgba(0,0,0,0.2);
                 }
 
                 .info.legend i {
@@ -23,16 +26,7 @@
                     margin-right: 8px;
                     opacity: 0.7;
                 }
-
-                .info.legend {
-                    font-size: 13px;
-                    bow-shadow: 0 0 10px rgba(0,0,0,0.2);
-                }
-
-                .info.legend {
-                    line-height: 20px;
-                }
-                    
+                
             </style>
         </head>
         
@@ -271,36 +265,62 @@
                     var legend = L.control({position: 'bottomright'});
 
                     legend.onAdd = function() {
-                        var div = L.DomUtil.create('div', 'info legend'),
-                            grades = [0, 1000000, 2000000, 3000000, 5000000, 10000000];
-                        // Symbols
-                        div.innerHTML += "<b>Map Symbols</b><br>";
-
-                        div.innerHTML += '<div style="display:flex;"><div style="width:10px;height:10px;background:red;border-radius:50%;margin-right:6px;"></div>All Volcanoes</div>';
-                        div.innerHTML += '<div style="display:flex;"><div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:10px solid orange;margin-right:6px;"></div>Recent (after 1500)</div>';
-                        div.innerHTML += '<div style="display:flex;"><div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:10px solid red;margin-right:6px;"></div>Holocene (~11,700 yrs)</div>';
-                        div.innerHTML += '<div style="display:flex;"><div style="width:12px;height:12px;border:1px solid red;background:rgba(255,0,0,0.2);margin-right:6px;"></div>50 km Impact Zone</div>';
-
-                        div.innerHTML += "<hr><b>Earthquakes</b><br>";
-                        div.innerHTML += '<i style="background:red"></i> > 5<br>';
-                        div.innerHTML += '<i style="background:orange"></i> 3–5<br>';
-                        div.innerHTML += '<i style="background:yellow"></i> < 3<br>';
-                        div.innerHTML += "<div style='margin-top:4px;font-size:12px;'>Circle size = magnitude</div><br>";
-
-                        div.innerHTML += "<hr style='margin:6px 0;'><b>Population</b><br>";
-
-                        for (var i = 0; i < grades.length; i++) {
-                            div.innerHTML +=
-                                '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
-                                grades[i].toLocaleString() + 
-                                (grades[i + 1] ? '&ndash;' + grades[i + 1].toLocaleString() + '<br>' : '+');
-                        }
-
-                        return div;
+                        this._div = L.DomUtil.create('div', 'info legend');
+                        updateLegend();
+                        return this._div;
                     };
 
-                legend.addTo(map);
+                    legend.addTo(map);
 
+                    function updateLegend() {
+                        var div = legend._div;
+                        var grades = [0, 1000000, 2000000, 3000000, 5000000, 10000000];
+
+                        div.innerHTML = "";
+    
+                        if (map.hasLayer(allVolcanoLayer) || map.hasLayer(recentVolcanoLayer) || map.hasLayer(holoceneVolcanoLayer)) {
+                            div.innerHTML += "<b>Map Symbols</b><br>";
+                            div.innerHTML += "<div style='margin-bottom:4px;'></div>";
+                        }
+
+                        if (map.hasLayer(allVolcanoLayer)) {
+                            div.innerHTML += '<div style="display:flex;"><div style="width:10px;height:10px;background:red;border-radius:50%;margin-right:6px;"></div>All Volcanoes</div>';
+                        }
+
+                        if (map.hasLayer(recentVolcanoLayer)) {
+                            div.innerHTML += '<div style="display:flex;"><div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:10px solid orange;margin-right:6px;"></div>Recent (after 1500)</div>';
+                        }
+
+                        if (map.hasLayer(holoceneVolcanoLayer)) {
+                            div.innerHTML += '<div style="display:flex;"><div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:10px solid red;margin-right:6px;"></div>Holocene (~11,700 yrs)</div>';
+                        }
+
+                        if (map.hasLayer(volcanoBufferLayer)) {
+                            div.innerHTML += '<div style="display:flex;"><div style="width:12px;height:12px;border:1px solid red;background:rgba(255,0,0,0.2);margin-right:6px;"></div>50 km Impact Zone</div>';
+                        }
+    
+                        if (map.hasLayer(earthquakeLayer)) {
+                            div.innerHTML += "<hr style='margin:6px 0;'><b>Earthquakes</b><br>";
+                            div.innerHTML += '<i style="background:red"></i> > 5<br>';
+                            div.innerHTML += '<i style="background:orange"></i> 3–5<br>';
+                            div.innerHTML += '<i style="background:yellow"></i> < 3<br>';
+                            div.innerHTML += "<div style='margin-top:4px;font-size:12px;'>Circle size = magnitude</div>";
+                        }
+    
+                        if (map.hasLayer(prefectureLayer)) {
+                            div.innerHTML += "<hr style='margin:6px 0;'><b>Population</b><br>";
+
+                            for (var i = 0; i < grades.length; i++) {
+                                div.innerHTML +=
+                                    '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
+                                    grades[i].toLocaleString() +
+                                    (grades[i + 1] ? '&ndash;' + grades[i + 1].toLocaleString() + '<br>' : '+');
+                            }
+                        }
+                    }
+                    
+                    map.on('overlayadd', updateLegend);
+                    map.on('overlayremove', updateLegend);
                 })
                 .catch(error => {
                     console.error("Error loading GeoJSON:", error);
