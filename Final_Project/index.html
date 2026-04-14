@@ -265,7 +265,39 @@
                     legend.onAdd = function() {
                         var div = L.DomUtil.create('div', 'info legend'),
                             grades = [0, 1000000, 2000000, 3000000, 5000000, 10000000];
-                    
+
+                        div.innerHTML += "<b>Map Symbols</b><br>";
+
+                        div.innerHTML +=
+                            '<div style="display:flex;align-items:center;margin-bottom:4px;">' +
+                            '<div style="width:10px;height:10px;background:red;border-radius:50%;margin-right:6px;"></div>' +
+                            'All Volcanoes</div>';
+
+                        div.innerHTML +=
+                            '<div style="display:flex;align-items:center;margin-bottom:4px;">' +
+                            '<div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:10px solid orange;margin-right:6px;"></div>' +
+                            'Recent Eruptions (after 1500)</div>';
+
+                        div.innerHTML +=
+                            '<div style="display:flex;align-items:center;margin-bottom:4px;">' +
+                            '<div style="width:12px;height:12px;background:red;border-radius:50%;margin-right:6px;"></div>' +
+                            'Active Volcanoes (Holocene)</div>';
+
+                        div.innerHTML +=
+                            '<div style="display:flex;align-items:center;margin-bottom:4px;">' +
+                            '<div style="width:12px;height:12px;border:1px solid red;background:rgba(255,0,0,0.2);margin-right:6px;"></div>' +
+                            '50 km Impact Zone</div>';
+
+                        div.innerHTML += "<hr>";
+
+                        div.innerHTML += "<b>Earthquakes</b><br>";
+                        div.innerHTML += '<i style="background:red"></i> Magnitude > 5<br>';
+                        div.innerHTML += '<i style="background:orange"></i> Magnitude 3–5<br>';
+                        div.innerHTML += '<i style="background:yellow"></i> Magnitude < 3<br>';
+                        div.innerHTML += "<i>Circle size = magnitude</i><br>";
+
+                        div.innerHTML += "<hr>";
+                        // Population Legend
                         div.innerHTML += "<b>Population</b><br>";
 
                         for (var i = 0; i < grades.length; i++) {
