@@ -5,6 +5,8 @@
             <meta charset="utf-8" />
             <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
+            <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+
             <style>
                 #map {height: 100vh;}
 
@@ -141,6 +143,27 @@
                         style: style,
                         onEachFeature: onEachFeature
                     });
+
+                    function calculatePopulationExposure(latlng) {
+
+                        var point = turf.point([latlng.lng, latlng.lat]);
+                        var buffer = turf.buffer(point, 50, { units: 'kilometers' });
+
+                        var totalPop = 0;
+
+                        prefectureLayer.eachLayer(function(layer) {
+                            var poly = layer.feature;
+                            var pop = populationData[poly.properties.id];
+
+                            if (!pop) return;
+
+                            if (turf.booleanIntersects(poly, buffer)) {
+                                totalPop += pop;
+                            }
+                        });
+
+                        return totalPop;
+                    }                  
                     // All Volcanoes
                     allVolcanoLayer = L.geoJSON(volcData,{
                         pointToLayer: function(feature, latlng){
@@ -153,9 +176,12 @@
                             });
                         },
                         onEachFeature: function(feature, layer){
-                            layer.bindPopup(
-                                "<b>Volcano:</b> " + feature.properties.Name +
-                                "<br><b>Last Eruption:</b> " + feature.properties.LastEruption
+                            layer.bindPopup(function(){
+                                var pop = calculatePopulationExposure(layer.getLatLng());
+
+                                return "<b>Volcano:</b> " + feature.properties.Name +
+                                "<br><b>Last Eruption:</b> " + feature.properties.LastEruption +
+                                "<br><b>Population within 50 km:</b> " + pop.toLocaleString();
                             );
                         }
                     });
@@ -171,10 +197,13 @@
                             });
                         },
                         onEachFeature: function(feature, layer){
-                            layer.bindPopup(
-                                "<b>Volcano:</b> " + feature.properties.Name +
+                            layer.bindPopup(function(){
+                                var pop = calculatePopulationExposure(layer.getLatLng());
+
+                                return "<b>Volcano:</b> " + feature.properties.Name +
                                 "<br><b>Last Eruption:</b> " + feature.properties.LastEruption +
-                                "<br><b>Status:</b> Recent (after 1500)"
+                                "<br><b>Status:</b> Recent (after 1500)" +
+                                "<br><b>Population within 50 km:</b> " + pop.toLocaleString();
                             );
                         }
                     });
@@ -186,10 +215,13 @@
                             });
                         },
                         onEachFeature: function(feature, layer){
-                            layer.bindPopup(
-                                "<b>Volcano:</b> " + feature.properties.Name +
+                            layer.bindPopup(function(){
+                                var pop = calculatePopulationExposure(layer.getLatLng());
+
+                                return "<b>Volcano:</b> " + feature.properties.Name +
                                 "<br><b>Status:</b> Active (Holocene)" +
-                                "<br><i>Erupted within the last ~11,700 years</i>"
+                                "<br><i>Erupted within the last ~11,700 years</i>" +
+                                "<br><b>Population within 50 km:</b> " + pop.toLocaleString();
                             );
                         }
                     });
