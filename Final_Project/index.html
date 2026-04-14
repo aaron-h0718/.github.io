@@ -114,7 +114,7 @@
                         fillColor: getColor(pop),
                         weight: 1,
                         color: 'white',
-                        fillOpacity: 0.7
+                        fillOpacity: 0.4
                     };
                 }
                 
@@ -318,8 +318,7 @@
                     volcanoBufferLayer.addTo(map);
                     earthquakeLayer.addTo(map);
                     // Layer control
-                    var overlayMaps = {
-                        "Population": prefectureLayer,
+                    var overlayMaps = {                        
                         "All Volcanoes": allVolcanoLayer,
                         "Recent Volcanoes": recentVolcanoLayer,
                         "Active Volcanoes (Holocene)": holoceneVolcanoLayer,
