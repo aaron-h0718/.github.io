@@ -144,10 +144,17 @@
                         onEachFeature: onEachFeature
                     });
 
+                    var exposureCache = {};
                     function calculatePopulationExposure(latlng) {
 
+                        var key = latlng.lat.toFixed(3) + "," + latlng.lng.toFixed(3);
+
+                        if (key in exposureCache) {
+                            return exposureCache[key];
+                        }
+
                         var point = turf.point([latlng.lng, latlng.lat]);
-                        var buffer = turf.buffer(point, 50, { units: 'kilometers' });
+                        var buffer = turf.buffer(point, 50, { units: 'kilometers', steps: 8 });
 
                         var totalPop = 0;
 
@@ -162,6 +169,8 @@
                             }
                         });
 
+                        exposureCache[key] = totalPop;
+                        
                         return totalPop;
                     }
 
