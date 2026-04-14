@@ -204,10 +204,11 @@
                                 color: "red",
                                 weight: 1,
                                 fillColor: "red",
-                                fillOpacity: 0.1
+                                fillOpacity: 0.1,
+                                interactive: false,
+                                pane: 'shadowPane'
                             });
-                        },
-                        interactive: false
+                        },                    
                     });                 
                     // Earthquake layer
                     earthquakeLayer = L.geoJSON(null,{
