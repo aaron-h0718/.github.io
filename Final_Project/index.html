@@ -22,7 +22,12 @@
                     float: left;
                     margin-right: 8px;
                     opacity: 0.7;
-                }     
+                }
+
+                .info.legend {
+                    font-size: 13px;
+                    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+                }
                     
             </style>
         </head>
@@ -178,7 +183,8 @@
                     // Holocene (Active)
                     holoceneVolcanoLayer = L.geoJSON(holoData, {
                         pointToLayer: function(feature, latlng){
-                            return L.circleMarker(latlng, {
+                            return L.marker(latlng, {
+                                icon: createTriangleIcon("red")
                                 radius: 7,
                                 fillColor: "red",
                                 color: "#000",
@@ -265,7 +271,7 @@
                     legend.onAdd = function() {
                         var div = L.DomUtil.create('div', 'info legend'),
                             grades = [0, 1000000, 2000000, 3000000, 5000000, 10000000];
-
+                        // Symbols
                         div.innerHTML += "<b>Map Symbols</b><br>";
 
                         div.innerHTML +=
@@ -280,7 +286,7 @@
 
                         div.innerHTML +=
                             '<div style="display:flex;align-items:center;margin-bottom:4px;">' +
-                            '<div style="width:12px;height:12px;background:red;border-radius:50%;margin-right:6px;"></div>' +
+                            '<div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:10px solid red;margin-right:6px;"></div>' +
                             'Active Volcanoes (Holocene)</div>';
 
                         div.innerHTML +=
@@ -289,12 +295,14 @@
                             '50 km Impact Zone</div>';
 
                         div.innerHTML += "<hr>";
-
+                        // Earthquakes
                         div.innerHTML += "<b>Earthquakes</b><br>";
+
                         div.innerHTML += '<i style="background:red"></i> Magnitude > 5<br>';
                         div.innerHTML += '<i style="background:orange"></i> Magnitude 3–5<br>';
                         div.innerHTML += '<i style="background:yellow"></i> Magnitude < 3<br>';
-                        div.innerHTML += "<i>Circle size = magnitude</i><br>";
+
+                        div.innerHTML += "<span style='font-size:12px;'>Circle size = magnitude</span><br>";
 
                         div.innerHTML += "<hr>";
                         // Population Legend
