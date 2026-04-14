@@ -4,7 +4,6 @@
             <title>Japan Hazard Exposure Map</title>
             <meta charset="utf-8" />
             <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-
             <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
 
             <style>
@@ -124,8 +123,7 @@
                         mouseout: resetHighlight
                     });
 
-                    var pop = populationData[feature.properties.id];
-                    
+                    var pop = populationData[feature.properties.id];                    
                     layer.bindPopup(
                         "<b>Prefecture:</b> " + feature.properties.nam +
                         "<br><b>Population:</b> " + pop.toLocaleString()
@@ -140,37 +138,36 @@
                 .then(([prefData, volcData, holoData]) => {
                     // Prefecture layer
                     prefectureLayer = L.geoJSON(prefData,{
-                        style: style,
-                        onEachFeature: onEachFeature
-                    });
+                        style: function(feature) {
+                            var pop = populationData[feature.properties.id];
+                            return {
+                                fillColor: getColor(pop),
+                                weight: 1,
+                                color: 'white',
+                                fillOpacity: 0.5
+                            };
+                        },
+                        interactive: false
+                    }).addTo(map);
 
                     var exposureCache = {};
+                    
                     function calculatePopulationExposure(latlng) {
-
                         var key = latlng.lat.toFixed(3) + "," + latlng.lng.toFixed(3);
-
-                        if (key in exposureCache) {
-                            return exposureCache[key];
-                        }
-
+                        if (key in exposureCache) return exposureCache[key];
                         var point = turf.point([latlng.lng, latlng.lat]);
                         var buffer = turf.buffer(point, 50, { units: 'kilometers', steps: 8 });
-
                         var totalPop = 0;
-
                         prefectureLayer.eachLayer(function(layer) {
                             var poly = layer.feature;
                             var pop = populationData[poly.properties.id];
-
                             if (!pop) return;
-
                             if (turf.booleanIntersects(poly, buffer)) {
                                 totalPop += pop;
                             }
                         });
 
-                        exposureCache[key] = totalPop;
-                        
+                        exposureCache[key] = totalPop;                        
                         return totalPop;
                     }
 
@@ -191,8 +188,7 @@
                     allVolcanoLayer = L.geoJSON(volcData,{
                         pointToLayer: function(feature, latlng){
                             var pop = calculatePopulationExposure(latlng);
-                            var color = getRiskColor(pop);
-                            
+                            var color = getRiskColor(pop);                            
                             return L.circleMarker(latlng,{
                                 radius: 6,
                                 fillColor: color,
@@ -204,14 +200,13 @@
                         onEachFeature: function(feature, layer){
                             layer.bindPopup(function(){
                                 var pop = calculatePopulationExposure(layer.getLatLng());
-
                                 return "<b>Volcano:</b> " + feature.properties.Name +
                                 "<br><b>Last Eruption:</b> " + feature.properties.LastEruption +
                                 "<br><b>Risk Level:</b> " + getRiskLevel(pop) +
                                 "<br><b>Population within 50 km:</b> " + pop.toLocaleString();
                             });
                         }
-                    });
+                    }).addTo(map);
                     // Recent Volcanoes (triangle + status)
                     recentVolcanoLayer = L.geoJSON(volcData,{
                         filter: function(feature){
@@ -220,8 +215,7 @@
                         },
                         pointToLayer: function(feature, latlng){
                             var pop = calculatePopulationExposure(latlng);
-                            var color = getRiskColor(pop);
-                            
+                            var color = getRiskColor(pop);                            
                             return L.marker(latlng, {
                                 icon: createTriangleIcon(color)
                             });
@@ -229,21 +223,18 @@
                         onEachFeature: function(feature, layer){
                             layer.bindPopup(function(){
                                 var pop = calculatePopulationExposure(layer.getLatLng());
-
-                                return "<b>Volcano:</b> " + feature.properties.Name +
-                                "<br><b>Last Eruption:</b> " + feature.properties.LastEruption +
+                                return "<b>Volcano:</b> " + feature.properties.Name +                                
                                 "<br><b>Status:</b> Recent (after 1500)" +
                                 "<br><b>Risk Level:</b> " + getRiskLevel(pop) +
                                 "<br><b>Population within 50 km:</b> " + pop.toLocaleString();
                             });
                         }
-                    });
+                    }).addTo(map);
                     // Holocene (Active)
                     holoceneVolcanoLayer = L.geoJSON(holoData, {
                         pointToLayer: function(feature, latlng){
                             var pop = calculatePopulationExposure(latlng);
                             var color = getRiskColor(pop);
-
                             return L.marker(latlng, {
                                 icon: createTriangleIcon(color)                         
                             });
@@ -251,15 +242,13 @@
                         onEachFeature: function(feature, layer){
                             layer.bindPopup(function(){
                                 var pop = calculatePopulationExposure(layer.getLatLng());
-
                                 return "<b>Volcano:</b> " + feature.properties.Name +
-                                "<br><b>Status:</b> Active (Holocene)" +
-                                "<br><i>Erupted within the last ~11,700 years</i>" +
+                                "<br><b>Status:</b> Active (Holocene)" +                                
                                 "<br><b>Risk Level:</b> " + getRiskLevel(pop) +
                                 "<br><b>Population within 50 km:</b> " + pop.toLocaleString();
                             });
                         }
-                    });
+                    }).addTo(map);
                     // Volcano Buffers (50 km)
                     volcanoBufferLayer = L.geoJSON(volcData,{
                         filter: function(feature){
