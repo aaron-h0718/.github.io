@@ -187,7 +187,7 @@
                             return year >= 1500;
                         },
                         pointToLayer: function(feature, latlng){
-                            return L.circleMarker(latlng,{
+                            return L.circle(latlng,{
                                 radius:50000,
                                 color: "red",
                                 weight: 1,
@@ -254,10 +254,10 @@
                                 '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
                                 grades[i].toLocaleString() + 
                                 (grades[i + 1] ? '&ndash;' + grades[i + 1].toLocaleString() + '<br>' : '+');
-                    }
+                        }
 
-                    return div;
-                };
+                        return div;
+                    };
 
                 legend.addTo(map);
 
