@@ -148,7 +148,13 @@
                                 weight: 1,
                                 fillOpacity: 0.8
                             });
-                        }       
+                        },
+                        onEachFeature: function(feature, layer){
+                            layer.bindPopup(
+                                "<b>Volcano:</b> " + feature.properties.Name +
+                                "<br><b>Last Eruption:</b> " + feature.properties.LastEruption
+                            );
+                        }
                     });
                     // Recent Volcanoes (triangle + status)
                     recentVolcanoLayer = L.geoJSON(volcData,{
@@ -160,6 +166,13 @@
                             return L.marker(latlng, {
                                 icon: createTriangleIcon("orange")
                             });
+                        },
+                        onEachFeature: function(feature, layer){
+                            layer.bindPopup(
+                                "<b>Volcano:</b> " + feature.properties.Name +
+                                "<br><b>Last Eruption:</b> " + feature.properties.LastEruption +
+                                "<br><b>Status:</b> Recent
+                            );
                         }
                     });
                     // Holocene (Active)
@@ -206,6 +219,12 @@
                                 weight: 1,
                                 fillOpacity: 0.7
                             });
+                        },
+                        onEachFeature: function(feature, layer){
+                            layer.bindPopup(
+                                "<b>Magnitude:</b> " + feature.properties.mag +
+                                "<br><b>Location:</b> " + feature.properties.place
+                            );
                         }
                     });                 
                     // Load USGS data
