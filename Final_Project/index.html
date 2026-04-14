@@ -99,8 +99,7 @@
                         weight: 3,
                         color: '#666',
                         fillOpacity: 0.7
-                    });
-                    layer.bringToFront();
+                    });                    
                 }
                 
                 function resetHighlight(e){
@@ -138,6 +137,7 @@
                 .then(([prefData, volcData, holoData]) => {
                     // Prefecture layer
                     prefectureLayer = L.geoJSON(prefData,{
+                        pane: 'tilePane',
                         style: function(feature) {
                             var pop = populationData[feature.properties.id];
                             return {
@@ -147,7 +147,7 @@
                                 fillOpacity: 0.5
                             };
                         },
-                        interactive: false
+                        onEachFeature: onEachFeature
                     }).addTo(map);
 
                     var exposureCache = {};
@@ -306,6 +306,10 @@
                     holoceneVolcanoLayer.addTo(map);
                     volcanoBufferLayer.addTo(map);
                     earthquakeLayer.addTo(map);
+
+                    allVolcanoLayer.bringToFront();
+                    recentVolcanoLayer.bringToFront();
+                    holoceneVolcanoLayer.bringToFront();
                     // Layer control
                     var overlayMaps = {                        
                         "All Volcanoes": allVolcanoLayer,
