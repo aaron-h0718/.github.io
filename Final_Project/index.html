@@ -311,7 +311,7 @@
                                 return "<b>Volcano:</b> " + feature.properties.Name +
                                 "<br><b>Status:</b> Active (Holocene)" +                                
                                 "<br><b>Risk Level:</b> " + getRiskLevel(pop) +
-                                "<br><b>Population within 50 km (30 mi):</b> " + pop.toLocaleString();
+                                "<br><b>Population within 50 km (31 mi):</b> " + pop.toLocaleString();
                             });
                         }
                     });
@@ -374,24 +374,29 @@
 
                     map.on('overlayadd', function(e) {
                         if (e.name === "Earthquakes") {
+
                             if (!earthquakeLayer._loaded) {
+
                                 fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson')
                                 .then(res => res.json())
                                 .then(data => {
+
                                     var japanQuakes = {
-                                        type: "FeatureCollection:,
+                                        type: "FeatureCollection",
                                         features: data.features.filter(function(feature){
                                             var lon = feature.geometry.coordinates[0];
                                             var lat = feature.geometry.coordinates[1];
                                             return lat >= 31 && lat <= 45 && lon >= 130 && lon <= 145 && feature.properties.mag >= 2.5;
-                                    })
-                                };
-                                earthquakeLayer.addData(japanQuakes);
-                                earthquakeLayer._load = true;
-                            });
+                                        })
+                                    };
+
+                                    earthquakeLayer.addData(japanQuakes);
+                                    earthquakeLayer._loaded = true;
+
+                                });
+                            }
                         }
-                    }
-                });                    
+                    });                    
                     // Legend
                     var legend = L.control({position: 'bottomright'});
 
