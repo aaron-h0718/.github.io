@@ -349,26 +349,14 @@
                         }
                     });                 
                     // Load USGS data
-                    fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson')
-                    .then(res => res.json())
-                    .then(data => {                        
-                        var japanQuakes = {
-                            type: "FeatureCollection",
-                            features: data.features.filter(function(feature){
-                                var lon = feature.geometry.coordinates[0];
-                                var lat = feature.geometry.coordinates[1];                                
-                                return lat >= 31 && lat <= 45 && lon >= 130 && lon <= 145 && feature.properties.mag >= 2.5;
-                            })
-                        };
-                        earthquakeLayer.addData(japanQuakes);
-                    });
+                  
                     // Add layers
                     prefectureLayer.addTo(map);
                     allVolcanoLayer.addTo(map);
                     recentVolcanoLayer.addTo(map);
                     holoceneVolcanoLayer.addTo(map);
                     volcanoBufferLayer.addTo(map);
-                    earthquakeLayer.addTo(map);
+                    
 
                     allVolcanoLayer.bringToFront();
                     recentVolcanoLayer.bringToFront();
@@ -383,6 +371,27 @@
                     };
 
                     L.control.layers(null, overlayMaps).addTo(map);
+
+                    map.on('overlayadd', function(e) {
+                        if (e.name === "Earthquakes") {
+                            if (!earthquakeLayer._loaded) {
+                                fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson')
+                                .then(res => res.json())
+                                .then(data => {
+                                    var japanQuakes = {
+                                        type: "FeatureCollection:,
+                                        features: data.features.filter(function(feature){
+                                            var lon = feature.geometry.coordinates[0];
+                                            var lat = feature.geometry.coordinates[1];
+                                            return lat >= 31 && lat <= 45 && lon >= 130 && lon <= 145 && feature.properties.mag >= 2.5;
+                                    })
+                                };
+                                earthquakeLayer.addData(japanQuakes);
+                                earthquakeLayer._load = true;
+                            });
+                        }
+                    }
+                });                    
                     // Legend
                     var legend = L.control({position: 'bottomright'});
 
