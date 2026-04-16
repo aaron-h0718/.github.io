@@ -269,7 +269,7 @@
                                 return "<b>Volcano:</b> " + feature.properties.Name +
                                 "<br><b>Last Eruption:</b> " + feature.properties.LastEruption +
                                 "<br><b>Risk Level:</b> " + getRiskLevel(pop) +
-                                "<br><b>Population within 50 km:</b> " + pop.toLocaleString();
+                                "<br><b>Population within 50 km (31 mi):</b> " + pop.toLocaleString();
                             });
                         }
                     });
@@ -292,7 +292,7 @@
                                 return "<b>Volcano:</b> " + feature.properties.Name +                                
                                 "<br><b>Status:</b> Recent (after 1500)" +
                                 "<br><b>Risk Level:</b> " + getRiskLevel(pop) +
-                                "<br><b>Population within 50 km:</b> " + pop.toLocaleString();
+                                "<br><b>Population within 50 km (31 mi):</b> " + pop.toLocaleString();
                             });
                         }
                     });
@@ -311,7 +311,7 @@
                                 return "<b>Volcano:</b> " + feature.properties.Name +
                                 "<br><b>Status:</b> Active (Holocene)" +                                
                                 "<br><b>Risk Level:</b> " + getRiskLevel(pop) +
-                                "<br><b>Population within 50 km:</b> " + pop.toLocaleString();
+                                "<br><b>Population within 50 km (30 mi):</b> " + pop.toLocaleString();
                             });
                         }
                     });
@@ -378,7 +378,7 @@
                         "All Volcanoes": allVolcanoLayer,
                         "Recent Volcanoes": recentVolcanoLayer,
                         "Active Volcanoes (Holocene)": holoceneVolcanoLayer,
-                        "Volcano Buffers (50km)": volcanoBufferLayer,
+                        "Volcano Buffers (50km / 31mi)": volcanoBufferLayer,
                         "Earthquakes": earthquakeLayer
                     };
 
