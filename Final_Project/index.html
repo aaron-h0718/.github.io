@@ -262,8 +262,7 @@
                             });
                         }
                     });                                     
-                    // Add layers                    
-                    inactiveVolcanoLayer.addTo(map);                    
+                    // Add layers                  
                     holoceneVolcanoLayer.addTo(map);                                                           
                     
                     inactiveVolcanoLayer.bringToBack();
@@ -332,8 +331,30 @@
                             div.innerHTML += '<i style="background:green"></i> Low (<500k)<br>';
 
                             div.innerHTML += "<hr><b>Volcano Status</b><br>";
-                            div.innerHTML += '<i style="background:red"></i> Active (risk-based)<br>';
-                            div.innerHTML += '<i style="background:gray"></i> Inactive<br>';
+                            div.innerHTML += `
+                            <div style="display:flex; align-items:center;">
+                                <div style="
+                                    width: 0;
+                                    height: 0;
+                                    border-left: 6px solid transparent;
+                                    border-right: 6px solid transparent;
+                                    border-bottom: 10px solid red;
+                                    margin-right:6px;
+                                "></div>
+                                Active (risk-based)
+                            </div>`;
+                            div.innerHTML += `
+                            <div style="display:flex; align-items:center;">
+                                <div style="
+                                    width: 0;
+                                    height: 0;
+                                    border-left: 6px solid transparent;
+                                    border-right: 6px solid transparent;
+                                    border-bottom: 10px solid rgba(0,0,0,0.6);
+                                    margin-right:6px;
+                                "></div>
+                                Inactive
+                            </div>`;
                         }
 
                         if (map.hasLayer(volcanoBufferLayer)) {
@@ -358,7 +379,16 @@
 
                     map.on('overlayadd', updateLegend);
                     map.on('overlayremove', updateLegend);
-                })
+                    map.on('overlayadd', function(e) {
+                        if (e.layer === inactiveVolcanoLayer) {
+                            inactiveVolcanoLayer.bringToBack();
+                        }
+                        if (e.layer === holoceneVolcanoLayer) {
+                            holoceneVolcanoLayer.bringToFront();
+                        }
+                });
+
+                })            
                 .catch(error => {
                     console.error("Error loading GeoJSON:", error);
                 });
