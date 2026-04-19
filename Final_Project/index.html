@@ -195,7 +195,9 @@
                                 pop > 1000000 ? "High" :
                                 pop > 500000  ? "Moderate" : "Low";
                     }
-                    // Active Volcanoes               
+                    // Active Volcanoes  
+                    console.log(feature.properties);
+                    
                     holoceneVolcanoLayer = L.geoJSON(holoData, {
                         pointToLayer: function(feature, latlng){
                             var pop = calculatePopulationExposure(latlng);
