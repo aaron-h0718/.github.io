@@ -11,8 +11,7 @@
 
                 .info.legend {
                     background: white;
-                    padding: 10px;
-                    line-height: 18px;
+                    padding: 10px;                    
                     color: #333;
                     border-radius: 5px;
                     font-size: 13px;
@@ -26,35 +25,10 @@
                     height: 18px;
                     margin-right: 8px;
                     opacity: 0.7;
-                }
+                }         
 
-                .quake-icon {
-                    position: relative;
-                    width: 12px;
-                    height: 12px;
-                    background: red;
-                    border-radius: 50%;
-                }
-
-                .quake-icon::before,
-                .quake-icon::after {
-                    content: '';
-                    position: absolute;
-                    top: -6px;
-                    left: -6px;
-                    width: 24px;
-                    height: 24px;
-                    border: 2px solid red;
-                    border-radius: 50%;
-                    opacity: 0.5;
-                }
-
-                .quake-icon::after {
-                    top: -12px;
-                    left: -12px;
-                    width: 36px;
-                    height: 36px;
-                    opacity: 0.3;
+                .leaflet-control-layers {
+                    width: 200px;
                 }
                 
             </style>
@@ -73,10 +47,9 @@
                     attribution: '&copy; OpenStreetMap contributors & CartoDB'
                 }).addTo(map);
                 // Layers
-                var prefectureLayer;
-                var allVolcanoLayer;
-                var recentVolcanoLayer;
+                var prefectureLayer;             
                 var holoceneVolcanoLayer;
+                var inactiveVolcanoLayer;
                 var volcanoBufferLayer;
                 var earthquakeLayer;
                 // Population Data & Style
@@ -92,7 +65,7 @@
                     41: 811442, 42: 1312317, 43: 1746740, 44: 1123852, 45: 1069576,
                     46: 1594225, 47: 1467480
                 };
-                
+                // Grayscale Choropleth
                 function getColor(d) {
                     return  d > 10000000 ? '#252525' :
                             d > 5000000  ? '#525252' :
@@ -101,13 +74,13 @@
                             d > 1000000  ? '#bdbdbd' :
                                            '#d9d9d9';            
                 }
-                
+
                 function getQuakeColor(mag) {
                     return  mag > 5 ? 'red' :
                             mag > 3 ? 'orange' :
                                       'yellow';
-                }        
-
+                }
+                
                 function createQuakeIcon(color){
                     return L.divIcon({
                         className: '',
@@ -144,7 +117,7 @@
                         iconSize: [20,20]
                     });
                 }
-                
+                               
                 function createTriangleIcon(color) {
                     return L.divIcon({
                         className: '',
@@ -158,7 +131,7 @@
                         iconSize: [12, 12]
                     });
                 }   
-                // Prefectures
+                // Prefectures Interaction
                 function highlightFeature(e){
                     var layer = e.target;                    
                     layer.setStyle({
@@ -203,7 +176,6 @@
                 .then(([prefData, volcData, holoData]) => {
                     // Prefecture layer
                     prefectureLayer = L.geoJSON(prefData,{
-                        pane: 'overlayPane',
                         style: function(feature) {
                             var pop = populationData[feature.properties.id];
                             return {
@@ -213,96 +185,42 @@
                                 fillOpacity: 0.5
                             };
                         },
-                        onEachFeature: onEachFeature
+                        onEachFeature: function(feature, layer){
+                            var pop = populationData[feature.properties.id];
+                            layer.bindPopup("<b>Prefecture:</b> " + feature.properties.nam +
+                            "<br><b>Population:</b> " + pop.toLocaleString());
+                        }
                     }).addTo(map);
 
-                    var exposureCache = {};
-                    
-                    function calculatePopulationExposure(latlng) {
-                        var key = latlng.lat.toFixed(3) + "," + latlng.lng.toFixed(3);
-                        if (key in exposureCache) return exposureCache[key];
-                        var point = turf.point([latlng.lng, latlng.lat]);
-                        var buffer = turf.buffer(point, 50, { units: 'kilometers', steps: 4 });
-                        var totalPop = 0;
-                        prefectureLayer.eachLayer(function(layer) {
-                            var poly = layer.feature;
-                            var pop = populationData[poly.properties.id];
-                            if (!pop) return;
-                            if (turf.booleanIntersects(poly, buffer)) {
-                                totalPop += pop;
+                    function calculatePopulationExposure(latlng){
+                        var buffer = turf.buffer(turf.point([latlng.lng, latlng.lat]),50,{units:'kilometers',steps:4});
+                        var total = 0;
+                        prefectureLayer.eachLayer(function(layer){
+                            var pop = populationData[layer.feature.properties.id];
+                            if(pop && turf.booleanIntersects(layer.feature,buffer)){
+                                total += pop;
                             }
                         });
-
-                        exposureCache[key] = totalPop;                        
-                        return totalPop;
+                        return total;
                     }
 
                     function getRiskColor(pop) {
                         return  pop > 5000000 ? "red" :
                                 pop > 1000000 ? "orange" :
-                                pop > 500000  ? "yellow" :
-                                                "green";
+                                pop > 500000  ? "yellow" : "green";
                     }
 
                     function getRiskLevel(pop) {
                         return  pop > 5000000 ? "Extreme" :
                                 pop > 1000000 ? "High" :
-                                pop > 500000  ? "Moderate" :
-                                                "Low";
+                                pop > 500000  ? "Moderate" : "Low";
                     }
-                    // All Volcanoes
-                    allVolcanoLayer = L.geoJSON(volcData,{
-                        pointToLayer: function(feature, latlng){
-                            var pop = calculatePopulationExposure(latlng);
-                            var color = getRiskColor(pop);                            
-                            return L.circleMarker(latlng,{
-                                radius: 6,
-                                fillColor: color,
-                                color: "#000",
-                                weight: 1,
-                                fillOpacity: 0.8
-                            });
-                        },
-                        onEachFeature: function(feature, layer){
-                            layer.bindPopup(function(){
-                                var pop = calculatePopulationExposure(layer.getLatLng());
-                                return "<b>Volcano:</b> " + feature.properties.Name +
-                                "<br><b>Last Eruption:</b> " + feature.properties.LastEruption +
-                                "<br><b>Risk Level:</b> " + getRiskLevel(pop) +
-                                "<br><b>Population within 50 km (31 mi):</b> " + pop.toLocaleString();
-                            });
-                        }
-                    });
-                    // Recent Volcanoes (triangle + status)
-                    recentVolcanoLayer = L.geoJSON(volcData,{
-                        filter: function(feature){
-                            var year = parseInt(feature.properties.LastEruption);
-                            return !isNaN(year) && year >= 1500;
-                        },
-                        pointToLayer: function(feature, latlng){
-                            var pop = calculatePopulationExposure(latlng);
-                            var color = getRiskColor(pop);                            
-                            return L.marker(latlng, {
-                                icon: createTriangleIcon(color)
-                            });
-                        },
-                        onEachFeature: function(feature, layer){
-                            layer.bindPopup(function(){
-                                var pop = calculatePopulationExposure(layer.getLatLng());
-                                return "<b>Volcano:</b> " + feature.properties.Name +                                
-                                "<br><b>Status:</b> Recent (after 1500)" +
-                                "<br><b>Risk Level:</b> " + getRiskLevel(pop) +
-                                "<br><b>Population within 50 km (31 mi):</b> " + pop.toLocaleString();
-                            });
-                        }
-                    });
-                    // Holocene (Active)
+                    // Active Volcanoes               
                     holoceneVolcanoLayer = L.geoJSON(holoData, {
                         pointToLayer: function(feature, latlng){
                             var pop = calculatePopulationExposure(latlng);
-                            var color = getRiskColor(pop);
                             return L.marker(latlng, {
-                                icon: createTriangleIcon(color)                         
+                                icon: createTriangleIcon(getRiskColor(pop))                         
                             });
                         },
                         onEachFeature: function(feature, layer){
@@ -315,21 +233,34 @@
                             });
                         }
                     });
+
+                    var holoceneNames = new Set(holoData.features.map(f => f.properties.Name));
+
+                    inactiveVolcanoLayer = L.geoJSON(volcData,{
+                        filter: function(feature){
+                            return !holoceneNames.has(feature.properties.Name);
+                        },
+                        pointToLayer: function(feature, latlng){
+                            return L.marker(latlng,{
+                                icon: createTriangleIcon("#888888")
+                            });
+                        },
+                        onEachFeature: function(feature, layer){
+                            layer.bindPopup(
+                                "<b>Volcano:</b> " + feature.properties.Name +
+                                "<br><b>Status:</b> Inactive (Pre-Holocene)"
+                            );
+                        }
+                    });                    
                     // Volcano Buffers (50 km)
                     volcanoBufferLayer = L.geoJSON(volcData,{
-                        filter: function(feature){
-                            var year = parseInt(feature.properties.LastEruption);
-                            return !isNaN(year) && year >= 1500;
-                        },
                         pointToLayer: function(feature, latlng){
                             return L.circle(latlng,{
                                 radius:50000,
                                 color: "red",
                                 weight: 1,
-                                fillColor: "red",
                                 fillOpacity: 0.1,
-                                interactive: false,
-                                pane: 'shadowPane'
+                                interactive: false,                                
                             });
                         }                    
                     });                 
@@ -352,25 +283,21 @@
                   
                     // Add layers
                     prefectureLayer.addTo(map);
-                    allVolcanoLayer.addTo(map);
-                    recentVolcanoLayer.addTo(map);
-                    holoceneVolcanoLayer.addTo(map);
-                    volcanoBufferLayer.addTo(map);
+                    inactiveVolcanoLayer.addTo(map);                    
+                    holoceneVolcanoLayer.addTo(map);                                                           
                     
-
-                    allVolcanoLayer.bringToFront();
-                    recentVolcanoLayer.bringToFront();
                     holoceneVolcanoLayer.bringToFront();
                     // Layer control
-                    var overlayMaps = {                        
-                        "All Volcanoes": allVolcanoLayer,
-                        "Recent Volcanoes": recentVolcanoLayer,
+                    var overlayMaps = {                     
                         "Active Volcanoes (Holocene)": holoceneVolcanoLayer,
+                        "Inactive Volcanoes": inactiveVolcanoLayer,
                         "Volcano Buffers (50km / 31mi)": volcanoBufferLayer,
                         "Earthquakes": earthquakeLayer
                     };
 
-                    L.control.layers(null, overlayMaps).addTo(map);
+                    L.control.layers(null, overlayMaps, {
+                        collapsed: false
+                    }).addTo(map);
 
                     map.on('overlayadd', function(e) {
                         if (e.name === "Earthquakes") {
@@ -414,7 +341,7 @@
 
                         div.innerHTML = "";
     
-                        if (map.hasLayer(allVolcanoLayer) || map.hasLayer(recentVolcanoLayer) || map.hasLayer(holoceneVolcanoLayer)) {
+                        if (map.hasLayer(holoceneVolcanoLayer) || map.hasLayer(inactiveVolcanoLayer)) {
                             div.innerHTML += "<b>Map Symbols</b><br>";
 
                             div.innerHTML += "<hr><b>Volcano Risk</b><br>";
@@ -422,10 +349,14 @@
                             div.innerHTML += '<i style="background:orange"></i> High (1M–5M)<br>';
                             div.innerHTML += '<i style="background:yellow"></i> Moderate (500k–1M)<br>';
                             div.innerHTML += '<i style="background:green"></i> Low (<500k)<br>';
+
+                            div.innerHTML += "<hr><b>Volcano Status</b><br>";
+                            div.innerHTML += '<i style="background:red"></i> Active (risk-based)<br>';
+                            div.innerHTML += '<i style="background:gray"></i> Inactive<br>';
                         }
 
                         if (map.hasLayer(volcanoBufferLayer)) {
-                            div.innerHTML += '<div style="display:flex;"><div style="width:12px;height:12px;border:1px solid red;background:rgba(255,0,0,0.2);margin-right:6px;"></div>50 km Impact Zone</div>';
+                            div.innerHTML += '<div style="display:flex;"><div style="width:12px;height:12px;border:1px solid red;background:rgba(255,0,0,0.2);margin-right:6px;"></div>50 km (31 mi) Impact Zone</div>';
                         }
 
                         if (map.hasLayer(earthquakeLayer)) {
