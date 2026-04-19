@@ -106,6 +106,7 @@
                             border-left: 8px solid transparent;
                             border-right: 8px solid transparent;
                             border-bottom: 14px solid ${color};
+                            filter: drop-shadow(0 0 1px #000);
                         "></div>`,
                         iconSize: [12, 12]
                     });
@@ -221,7 +222,7 @@
                         },
                         pointToLayer: function(feature, latlng){
                             return L.marker(latlng,{
-                                icon: createTriangleIcon("#888888")
+                                icon: createTriangleIcon("rgba(0,0,0,0.6)")
                             });
                         },
                         onEachFeature: function(feature, layer){
