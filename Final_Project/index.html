@@ -76,45 +76,24 @@
                 }
 
                 function getQuakeColor(mag) {
-                    return  mag > 5 ? 'red' :
-                            mag > 3 ? 'orange' :
-                                      'yellow';
+                    return  mag > 5 ? '#5a2d0c' : // dark brown
+                            mag > 3 ? '#8b4513' : // brown
+                                      '#d2b48c';  // tan
                 }
                 
                 function createQuakeIcon(color){
                     return L.divIcon({
                         className: '',
                         html: `
-                        <div style="
-                            position: relative;
+                        <div style="                            
                             width: 12px;
                             height: 12px;
                             background: ${color};
-                            border-radius: 50%;
-                        ">
-                            <div style="
-                                position: absolute;
-                                top: -6px;
-                                left: -6px;
-                                width: 24px;
-                                height: 24px;
-                                border: 2px solid ${color};
-                                border-radius: 50%;
-                                opacity: 0.5;
-                            "></div>
-                            <div style="
-                                position: absolute;
-                                top: -12px;
-                                left: -12px;
-                                width: 36px;
-                                height: 36px;
-                                border: 2px solid ${color};
-                                border-radius: 50%;
-                                opacity: 0.3;
-                            "></div>
-                        </div>
+                            transform: rotate(45deg);
+                            border: 1px solid #000;
+                        "></div>
                         `,
-                        iconSize: [20,20]
+                        iconSize: [12,12]
                     });
                 }
                                
@@ -253,7 +232,7 @@
                         }
                     });                    
                     // Volcano Buffers (50 km)
-                    volcanoBufferLayer = L.geoJSON(volcData,{
+                    volcanoBufferLayer = L.geoJSON(holoData,{
                         pointToLayer: function(feature, latlng){
                             return L.circle(latlng,{
                                 radius:50000,
@@ -273,19 +252,20 @@
                             });
                         },
                         onEachFeature: function(feature, layer){
-                            layer.bindPopup(
-                                "<b>Magnitude:</b> " + feature.properties.mag +
-                                "<br><b>Location:</b> " + feature.properties.place
-                            );
+                            layer.bindPopup(function(){
+                                var time = new Date(feature.properties.time);
+                                return  "<b>Magnitude:</b> " + feature.properties.mag +
+                                        "<br><b>Location:</b> " + feature.properties.place +
+                                        "<br><b>Date:</b> " + time.toLocaleDateString() +
+                                        "<br><b>Time:</b> " + time.toLocaleTimeString();
+                            });
                         }
-                    });                 
-                    // Load USGS data
-                  
-                    // Add layers
-                    prefectureLayer.addTo(map);
+                    });                                     
+                    // Add layers                    
                     inactiveVolcanoLayer.addTo(map);                    
                     holoceneVolcanoLayer.addTo(map);                                                           
                     
+                    inactiveVolcanoLayer.bringToBack();
                     holoceneVolcanoLayer.bringToFront();
                     // Layer control
                     var overlayMaps = {                     
@@ -361,9 +341,9 @@
 
                         if (map.hasLayer(earthquakeLayer)) {
                             div.innerHTML += "<hr><b>Earthquakes</b><br>";
-                            div.innerHTML += '<i style="background:red"></i> > 5<br>';
-                            div.innerHTML += '<i style="background:orange"></i> 3–5<br>';
-                            div.innerHTML += '<i style="background:yellow"></i> < 3<br>';
+                            div.innerHTML += '<i style="background:#5a2d0c"></i> > 5<br>';
+                            div.innerHTML += '<i style="background:#8b4513"></i> 3–5<br>';
+                            div.innerHTML += '<i style="background:#d2b48c"></i> < 3<br>';
                         }
 
                         if (map.hasLayer(prefectureLayer)) {
