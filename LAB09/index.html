@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+    <html>
+        <head>
+            <title>WEB GIS LAB09</title>
+
+            <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+            <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+            <style>
+                #map { height: 600px; }
+
+                .legend i {
+                    width: 18px;
+                    height: 18px;
+                    float: left;
+                    margin-right: 8px;
+                    opacity: 0.9;
+                }
+
+            </style>
+        </head>
+        <body>
+            
+            <div style="
+                position: absolute;
+                top: 10px;
+                left: 50px;
+                z-index: 1000;
+                background: white;
+                padding: 8px 12px;
+                border-radius: 6px;
+                box-shadow: 0 0 10px rgba(0,0,0,0.2);
+                font-weight: bold;
+            ">
+                Nebraska Demographics & Income
+            </div>
+
+            <div id="map"></div>
+
+            <script>
+                // Create Map Centered on Nebraska
+                var map = L.map('map').setView([40.8, -96.7], 8);
+                var lancasterLayer, douglasLayer, boundaryLayer;
+                var bounds = [
+                    [40.5, -97.1],
+                    [41.5, -95.8]
+                ];                
+                map.fitBounds(bounds);
+                // Add Basemap
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
+                    .addTo(map);
+
+                function getBlueColor(d) {
+                    return  d > 90 ? '#084594' :
+                            d > 80 ? '#2171b5' :
+                            d > 70 ? '#4292c6' :
+                            d > 60 ? '#6baed6' :
+                            d > 50 ? '#9ecae1' :
+                                     '#c6dbef' ;
+                }
+
+                function getGreenColor(d) {
+                    return  d > 150000  ? '#00441b' :
+                            d > 100000  ? '#238b45' :
+                            d > 75000   ? '#41ab5d' :
+                            d > 50000   ? '#74c476' :
+                                          '#c7e9c0' ;
+                }
+             
+                Promise.all([
+                    fetch('lancaster.geojson').then(res => res.json()),
+                    fetch('douglas.geojson').then(res => res.json()),
+                    fetch('douglas_boundary.geojson').then(res => res.json())                    
+                ]).then(([lancasterData, douglasData, boundaryData]) => {
+                    // Lancaster Layer
+                    lancasterLayer = L.geoJSON(lancasterData, {
+                        style: function(feature) {
+                            var total = feature.properties.ttl_ppE;
+                            var white = feature.properties.whiteE / total * 100;
+                            return {
+                                fillColor: getBlueColor(white),
+                                weight: 1,
+                                color: "black",
+                                fillOpacity: 0.7
+                            };
+                        },
+                        onEachFeature: function(feature, layer) {
+                            var total = feature.properties.ttl_ppE;
+
+                            var white = (feature.properties.whiteE / total * 100).toFixed(1);
+                            var black = (feature.properties.blackE / total * 100).toFixed(1);
+                            var asian = (feature.properties.asianE / total * 100).toFixed(1);
+                            var hisp = (feature.properties.HispE / total * 100).toFixed(1);
+
+                            layer.bindPopup(
+                                "This tract is " +
+                                white + "% White, " +
+                                black + "% Black, " +
+                                asian + "% Asian, and " +
+                                hisp + "% Hispanic."
+                            );
+
+                            layer.on('click', function() {
+                                legend.update("race");
+                            });
+                        }
+                    });
+                    // Douglas Layer
+                    douglasLayer = L.geoJSON(douglasData, {
+                        style: function(feature) {
+                            return {
+                                fillColor: getGreenColor(feature.properties.incomeE),
+                                weight: 1,
+                                color: "black",
+                                fillOpacity: 0.7
+                            };
+                        },
+                        onEachFeature: function(feature, layer) {
+                            layer.bindPopup(
+                                "Median income: $" +
+                                feature.properties.incomeE.toLocaleString()
+                            );
+
+                            layer.on('click', function() {
+                                legend.update("income");
+                            });
+                        }
+                    });
+                    // Boundary Layer
+                    boundaryLayer = L.geoJSON(boundaryData, {
+                        style: {
+                            color: "red",
+                            weight: 3,
+                            fill: false
+                        }
+                    });
+                    // Add Layers ON By Default
+                    lancasterLayer.addTo(map);
+                    douglasLayer.addTo(map);
+                    boundaryLayer.addTo(map);
+                    // Layer toggle (ALWAYS visible)
+                    L.control.layers(null, {
+                        "Lancaster Race": lancasterLayer,
+                        "Douglas Income": douglasLayer,
+                        "Boundary": boundaryLayer
+                    }, {
+                        collapsed: false
+                    }).addTo(map);
+                    // Smart Zoom Behavior
+                    map.on('overlayremove', function(e) {
+                        if (e.name === "Lancaster Race" && map.hasLayer(douglasLayer)) {
+                                map.flyToBounds(douglasLayer.getBounds());                            
+                        }
+                        if (e.name === "Douglas Income" && map.hasLayer(lancasterLayer)) {
+                                map.flyToBounds(lancasterLayer.getBounds());                            
+                        }
+                    });
+
+                    map.on('overlayadd', function(e) {
+                        if (map.hasLayer(lancasterLayer) && map.hasLayer(douglasLayer)) {
+                            var group = L.featureGroup([lancasterLayer, douglasLayer]);
+                            map.flyToBounds(group.getBounds());
+                        }
+                    });
+                });                    
+                // Dynamic Legend
+                var legend = L.control({position: 'bottomright'});
+
+                legend.onAdd = function () {
+                    var div = L.DomUtil.create('div', 'info legend');
+                        div.style.background = "white";
+                        div.style.padding = "10px";
+                        div.style.borderRadius = "8px";
+                        div.style.boxShadow = "0 0 10px rgba(0,0,0,0.2)";
+
+                        this._div = div;
+                        this.update();
+
+                        return div;
+                    };
+
+                    legend.update = function (type) {
+
+                        var div = this._div;
+
+                        if (type === "income") {
+
+                            div.innerHTML = "<b>Median Income ($)</b><br>" +
+                                '<i style="background:#c7e9c0"></i> 0–50k<br>' +
+                                '<i style="background:#74c476"></i> 50k–75k<br>' +
+                                '<i style="background:#41ab5d"></i> 75k–100k<br>' +
+                                '<i style="background:#238b45"></i> 100k–150k<br>' +
+                                '<i style="background:#00441b"></i> 150k+';
+
+                        } else {
+
+                            div.innerHTML = "<b>White Population (%)</b><br>" +
+                                '<i style="background:#c6dbef"></i> 50–60<br>' +
+                                '<i style="background:#9ecae1"></i> 60–70<br>' +
+                                '<i style="background:#6baed6"></i> 70–80<br>' +
+                                '<i style="background:#4292c6"></i> 80–90<br>' +
+                                '<i style="background:#084594"></i> 90+';
+                        }
+                    };
+
+                    legend.addTo(map);
+                    legend.update("race");
+
+            </script>
+        </body>
+    </html>
