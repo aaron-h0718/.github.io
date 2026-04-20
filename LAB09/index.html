@@ -39,7 +39,9 @@
 
             <script>
                 // Create Map Centered on Nebraska
-                var map = L.map('map').setView([40.8, -96.7], 8);
+                var map = L.map('map', {
+                    minZoom: 8
+                }).setView([40.8, -96.7], 8);
                 var lancasterLayer, douglasLayer, boundaryLayer;
                 var bounds = [
                     [40.5, -97.1],
