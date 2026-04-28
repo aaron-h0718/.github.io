@@ -73,9 +73,17 @@
                     maxZoom: 10
                 }).setView([36.5, 138], 5);
                 // Clean basemap (no labels)
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
-                    attribution: '&copy; OpenStreetMap contributors & CartoDB'
-                }).addTo(map);
+                var lightBasemap = L.tileLayer(
+                    'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png',
+                    { attribution: '&copy; OpenStreetMap contributors & CartoDB' }
+                );
+
+                var darkBasemap = L.tileLayer(
+                    'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',
+                    { attribution: '&copy; OpenStreetMap contributors & CartoDB' }
+                );
+                // default
+                lightBasemap.addTo(map);
                 // Layers
                 var prefectureLayer;             
                 var holoceneVolcanoLayer;
@@ -314,9 +322,12 @@
                         "Earthquakes": earthquakeLayer
                     };
 
-                    L.control.layers(null, overlayMaps, {
-                        collapsed: false
-                    }).addTo(map);
+                    var baseMaps = {
+                        "Dark Mode": darkBasemap,
+                        "Light Mode": lightBasemap
+                    };
+
+                    L.control.layers(baseMaps, overlayMaps, {collapsed:false}).addTo(map);
 
                     map.on('overlayadd', function(e) {
                         if (e.name === "Earthquakes") {
