@@ -312,7 +312,29 @@
                                 });
                             }
                         }
-                    });                    
+                    });
+                    // Info Box
+                    var infoBox = L.control({position:'topleft'});
+                    infoBox.onAdd=function(){
+                        var div=L.DomUtil.create('div','info legend');
+                        div.innerHTML=`
+                        <b>How Volcano Risk is Defined</b><hr>
+
+                        <b> Active (Holocene)</b><br>
+                        Volcanoes that have erupted within the last ~11,700 years.
+                        These are considered capable of future activity.<br><br>
+
+                        <b>Risk Calculations</b><br>
+                        A 50 km buffer is created around each active volcano.<br>
+                        Population within this zone is summed to estimate esposure.<br><br>
+
+                        <b>Why this matters</b><br>
+                        This connects physical hazards to potential human impact,
+                        rather than just mapping volcano locations.                                                
+                        `;
+                        return div;
+                    };
+                    infoBox.addTo(map);
                     // Legend
                     var legend = L.control({position: 'bottomright'});
 
